@@ -84,6 +84,11 @@ class ContractController extends Controller
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function CreateContract(Request $request){
+        $contractData = ['contractId' => new Str::uuid(), 
+                        'title' => $request->input("title"), 
+                        'totalCost' => $request->input("totalCost"), 
+                        'signingDate' => $request->input("signingDate"), 
+                        'description', 'sellerName', 'phone'];
         $product = $request->get("product");
         try{
             $result = 1;
