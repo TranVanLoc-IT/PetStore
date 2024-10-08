@@ -27,7 +27,7 @@ class PorfolioController extends Controller
         // san pham + hoa don di kem
         $product = [];
         $invoices = [];
-        $data = $this->neo4j->run($this->queryDatasource["Pet"]["GetPetData"],['date' => $dateCriteria]);
+        $data = $this->neo4j->run($this->queryDatasource["Product"]["GetProducts"],['date' => $dateCriteria]);
         foreach($data as $d)
         {
             $pet = new Pet($d->get("p")->values());
@@ -57,6 +57,6 @@ class PorfolioController extends Controller
             $shifts[$staff->id] = $d->get("shiftList");
             $paySalary[$staff->id] = $d->get("salary");
         }
-        return view('staffView', compact());
+        return view('staffView', compact('staffs', 'shiftWork'));
     }
 }

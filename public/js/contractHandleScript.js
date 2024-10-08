@@ -38,38 +38,59 @@ function GetViewDetail(contract, vendor) {
 }
 
 
-function DeleteContract(button, id){
+function DeleteContract(id){
     if(confirm("Xác nhận xóa") === true){
-        try {
-            Delete(id);
-            button.closet("tr").remove();
-        } catch (error) {
-            alert('Thất bại');
-        }
+        Delete(id);
+        document.getElementById("row-"+ id).remove();
     }
 }
 
 function ConfirmContract(id){
-    fetch(window.location.origin + "/hop-dong/edit",{
-        method:'PUT',
-        data:{"contractId":id},
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'Content-Type': 'application/json'
-        }})
+        fetch('/hop-dong/edit', {
+            method: 'PUT',
+            headers: {
+                'X-CSRF-TOKEN': token,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ contractId: id }), // Send the ID in the request body
+        })
+        .then(response=>response.json())
+        .then(response=>{
+            let updateButtonStatus = document.getElementById("update-" + id);
+            updateButtonStatus.innerText = 'Duyệt';
+            updateButtonStatus.classList.replace('bg-amber-700', 'bg-primary-700');
+            updateButtonStatus.classList.replace('bg-amber-600', 'bg-primary-600');
+            alert(response.Inform);
+        })
+        .catch(err => alert(err));
+}
+
+function Delete(id){
+    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        fetch('/hop-dong/edit', {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': token,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ contractId: id }), // Send the ID in the request body
+        })
         .then(response=>response.json())
         .then(response=>alert(response.Inform))
         .catch(err => alert(err));
 }
 
-function Delete(id){
-    fetch(window.location.origin + "/hop-dong/edit", {
-        method:'DELETE', 
-        data:{"contractId":id},    
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'Content-Type': 'application/json'
-        }})
+function CreateContract(){
+    const formData = new FormData(document.getElementById('create-contract-form'));
+    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        fetch('/hop-dong/edit', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': token,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData), // Send the ID in the request body
+        })
         .then(response=>response.json())
         .then(response=>alert(response.Inform))
         .catch(err => alert(err));
@@ -77,7 +98,7 @@ function Delete(id){
 
 function CreateVendorInfoForm(){
     const typeOpt = document.getElementById('vendorType');
-    const companyOpt = document.getElementById('vendorList');
+    const companyOpt = document.getElementById('vendorId');
     const sellerOpt = document.getElementById('cVendor');
     if(typeOpt.value == "company"){
         companyOpt.innerHTML = "";
@@ -114,48 +135,68 @@ function LoadCreateProductListForm(){
         case "food":
             GetDropdownData("/food").then(data => {
                 data.forEach(food => {
-                    dropdownContent += `<option name="product[]" id="product[]" value="${food["id"]}">${food["foodName"]}</option>`
+                    dropdownContent += `<option name="productName[]" id="productName[]" value="${food["foodId"]}">${food["foodName"]}</option>`
                 });
-                
+                AssignCreateProductContent(createForm, dropdownContent);
             });
             break;
             case "pet":
                 GetDropdownData("/pet").then(data => {
                     data.forEach(pet => {
-                        dropdownContent += `<option name="product[]" id="product[]" value="${pet["id"]}">${pet["petName"]}</option>`
+                        dropdownContent += `<option name="productName[]" id="productName[]" value="${pet["petName"]}">${pet["petName"]}</option>`
                     });
                     
                 });
-                
+                AssignCreateProductContent(createForm, dropdownContent);
             break;
-            case "petTool":
+            case "tool":
                 GetDropdownData("/petTool").then(data => {
                     data.forEach(petTool => {
-                        dropdownContent += `<option name="product[]" id="product[]" value="${petTool["id"]}">${petTool["toolName"]}</option>`
+                        dropdownContent += `<option name="productName[]" id="productName[]" value="${petTool["toolId"]}">${petTool["toolName"]}</option>`
                     });
                     
                 });
+                AssignCreateProductContent(createForm, dropdownContent);
             break;
             
     }
-    createForm.innerHTML = `<div class="flex space-x-4 items-center mt-2">
+    
+}
+function AssignCreateProductContent(createForm, dropdownContent) {
+    createForm.innerHTML = `<div class="flex flex-wrap space-x-4 items-center mt-2">
     <label for="category" class="text-sm font-medium text-gray-900 dark:text-white">Sản phẩm</label>
     <select id="category" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
         <option selected>Chọn</option>
         ${dropdownContent}
     </select>
 
-    <label for="quantity" class="text-sm font-medium text-gray-900 dark:text-white">Số lượng: </label>
-    <input type="number" name="quantity" id="quantity" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Số lượng" required="">
+    <label for="quantity[]" class="text-sm font-medium text-gray-900 dark:text-white">Số lượng: </label>
+    <input type="number" name="quantity[]" id="quantity[]" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Số lượng" required="">
 
     <label for="priceImport" class="text-sm font-medium text-gray-900 dark:text-white">Giá nhập: </label>
-    <input type="number" name="priceImport" id="priceImport" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Giá nhập" required="">
+    <input type="number" name="priceImport[]" id="priceImport[]" onchange="CalulateTotalCost()" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Giá nhập" required="">
 </div>
                     `;
-    
 }
 function AddNewProductSupply(event){
     event.preventDefault();
     const createForm = document.getElementById('productSupplies');
     createForm.innerHTML += createForm.innerHTML;
 }
+
+function CalulateTotalCost(){
+      // Lấy tất cả các phần tử có id là 'priceImport[]'
+      const priceInputs = document.querySelectorAll('input[id="priceImport[]"]');
+      const quantityInputs = document.querySelectorAll('input[id="quantity[]"]');
+    
+      let total = 0;
+      
+      // Duyệt qua các phần tử và tính tổng
+      priceInputs.forEach(function(input, index) {
+          const value = parseFloat(input.value) || 0; // Chuyển đổi giá trị thành số (nếu không thì là 0)
+          total += value  * quantityInputs[index].value;
+      });
+  
+      // Hiển thị tổng giá trị
+      document.getElementById('totalCost').value = total;
+  }

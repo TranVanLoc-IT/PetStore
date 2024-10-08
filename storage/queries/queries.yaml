@@ -41,12 +41,28 @@ Invoice:
   GetInvoices: |
     MATCH(i:Invoice) 
     WHERE toString(i.dateCreated) =~ $date 
-    RETURN i
-  GetSpecificInvoice: |
-    MATCH (t:Transaction)-[:PAY_FOR]->(i:Invoice)-[r:PURCHASE]->(p:Pet|PetTool) 
-    RETURN i, r, p, t
+    RETURN {
+    invoiceId: i.invoiceId, 
+    totalAmount: i.totalAmount, 
+    dateCreated: apoc.temporal.format(i.dateCreated, 'dd-MM-yyyy HH:mm:ss'),
+    totalCost: i.totalCost } AS i
+  GetDetailInvoice: |
+   MATCH (t:Transaction)-[rp:PAY_FOR]->(i:Invoice {invoiceId: $id})-[r:PURCHASE]->(p:Pet|PetTool) 
+    WITH 
+        {transactionId: t.transactionId, moneyRecieved: t.moneyRecieved, status: rp.status, type: t.type} AS transaction,
+        {
+            productName: CASE 
+                            WHEN p:Pet THEN p.petName 
+                            WHEN p:PetTool THEN p.toolName 
+                            ELSE NULL 
+                        END,
+            price: p.price, 
+            quantity: r.quantity
+        } AS products
+    RETURN transaction, collect(products) AS productList
+
   DeleteInvoice: |
-    MATCH (i:Invoice{id: $id})-[r]->(t:Transaction) 
+    MATCH (i:Invoice{toString(dateCreated) ~= $date})-[r]->(t:Transaction) 
     DETACH DELETE t, i
 
 Staff:
@@ -62,10 +78,10 @@ Staff:
 Product:
   GetProducts: |
     MATCH (i:Invoice WHERE toString(i.dateCreated) =~ $date)-[r:PURCHASE]->(p:Pet|PetTool) 
-    WITH i, sum(r.quantity) AS totalQuantitySold, 
+    WITH collect(i) as invoiceList, sum(r.quantity) AS totalQuantitySold, 
          sum(r.price) AS totalRevenue, 
          p 
-    RETURN i, totalQuantitySold, totalRevenue, p
+    RETURN invoiceList, totalQuantitySold, totalRevenue, p
   GetDetailProduct: ""
 
 Contract:
@@ -95,17 +111,24 @@ Contract:
     } AS p
 
   CreateNewContract: |
-    CREATE (:Contract {id: $id, 
+    CREATE (:Contract {contractId: $id, 
                        title: btrim($title,' '), 
                        totalQuantity: $totalQuantity, 
                        totalCost: $totalCost, 
                        signingDate: $date, 
-                       amount})
+                       amount})-[:$ownedBy]-(:$vendor)
+  CreateIncludeRelationShip: |
+                    CREATE (:Contract {contractId: $id, 
+                       title: btrim($title,' '), 
+                       totalQuantity: $totalQuantity, 
+                       totalCost: $totalCost, 
+                       signingDate: $date, 
+                       amount})-[:$ownedBy]
   ConfirmContract: |
-    MATCH (c:Contract {id: $id}) 
+    MATCH (c:Contract {contractId: $id}) 
     SET c.status = 'Duyệt'
   DeleteContract: |
-    MATCH (c:Contract {id: $id}) 
+    MATCH (c:Contract {contractId: $id}) 
     DETACH DELETE c
 
 Promotion:

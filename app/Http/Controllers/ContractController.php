@@ -42,27 +42,33 @@ class ContractController extends Controller
         $data = [];
        switch($table){
         case "pet":
-            $data = $this->neo4j->run("MATCH (n:pet) 
-                                    WITH n.petName AS petName, n.petId AS petId 
-                                    RETURN petName, petId
+            $data = $this->neo4j->run("MATCH (n:Pet) 
+                                    WITH n.petName AS petName
+                                    RETURN petName
                                     ")->toArray();
+                                    break;
+
         case "petTool":
-            $data = $this->neo4j->run("MATCH (n:tool) 
+            $data = $this->neo4j->run("MATCH (n:PetTool) 
                                     WITH n.toolName AS toolName, n.toolId AS toolId 
                                     RETURN toolName, toolId
                                     ")->toArray();
+                                    break;
+
         case "food":
             $data = $this->neo4j->run("MATCH (n:Food) 
                                     WITH n.foodName AS foodName, n.foodId AS foodId 
                                     RETURN foodName, foodId
                                     ")->toArray();
+                                    break;
         case "vendor":
             $data = $this->neo4j->run("MATCH (n:Vendor) 
                                         WITH n.vendorName AS vendorName, n.vendorId AS vendorId 
                                         RETURN vendorName, vendorId
                                         ")->toArray();
+                                    break;
+        }
         return $data;
-       }
     }
 
     /**
@@ -83,24 +89,23 @@ class ContractController extends Controller
      * @param \App\Models\Contract $contract
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function CreateContract(Request $request){
-        $contractData = ['contractId' => new Str::uuid(), 
-                        'title' => $request->input("title"), 
-                        'totalCost' => $request->input("totalCost"), 
-                        'signingDate' => $request->input("signingDate"), 
-                        'description', 'sellerName', 'phone'];
-        $product = $request->get("product");
+    public function CreateContract(){
+        $data = json_decode(file_get_contents('php://input'), true);
+        $contractData = ['contractId' => (string)Str::uuid(),
+                        'title' => $data["title"], 
+                        'totalCost' => $data["totalCost"], 
+                        'signingDate' => $data["signingDate"]];
+                        // ['description'
+                        // 'sellerName', 
+                        // 'phone'];
+        
+        $products = [];
         try{
             $result = 1;
-            if($result > 0){
-                return response()->json('Success', "Tạo hợp đồng thành công");
-            }
+            return response()->json('Success', "Tạo hợp đồng thành công"+$data("title"));
         }catch(\Exception $e){
             return response()->json('error', "Có lỗi");
         }
-        
-        return response()->json('fail', "Tạo hợp đồng thất bại");
-
     }
     
     /**
@@ -108,17 +113,15 @@ class ContractController extends Controller
      * @param mixed $contractId
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function DeleteContract(Request $request){
+    public function DeleteContract(){
+
+    $data = json_decode(file_get_contents('php://input'), true);
         try{
-            $result = $this->neo4j->run($this->queryDatasource["Contract"]["DeleteContract"],["id" => $request->input('contractId')]);
-            if($result > 0){
-                return response()->json(['Inform' => "Xóa hợp đồng thành công"], 200 );
-            }
+            $result = $this->neo4j->run($this->queryDatasource["Contract"]["DeleteContract"],["id" => $data["contractId"]]);
+            return response()->json(['Inform' => "Xóa hợp đồng thành công"], 200 );
         }catch(\Exception $e){
-            return response()->json(['Inform' => "Xóa hợp đồng thất bại"+$request->input('contractId')], 500);
+            return response()->json(['Inform' => "Xóa hợp đồng thất bại"], 500);
         }
-        
-        return response()->json(['Inform' => "Xóa hợp đồng thất bại"], 500);
     }
 
     /**
@@ -127,15 +130,12 @@ class ContractController extends Controller
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function ConfirmContract(Request $request){
+    $data = json_decode(file_get_contents('php://input'), true);
         try{
-            $result = $this->neo4j->run($this->queryDatasource->Contract->CreateContract,["id" => $request->input('contractId')]);
-            if($result > 0){
-                return response()->json(['Inform' => "Cập nhật hợp đồng thành công" + $request->input('contractId')], 200 );
-            }
+            $result = $this->neo4j->run($this->queryDatasource->Contract->CreateContract,["id" => $data('contractId')]);
+            return response()->json(['Inform' => "Cập nhật hợp đồng thành công"], 200 );
         }catch(\Exception $e){
             return response()->json(['Inform' => "Cập nhật hợp đồng thất bại"], 500);
         }
-        
-        return response()->json(['Inform' => "Cập nhật hợp đồng thất bại"], 500);
     }
 }

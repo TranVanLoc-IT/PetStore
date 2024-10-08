@@ -31,14 +31,11 @@ class PromotionController extends Controller
      * @param \App\Models\Promotion $promotion
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function CreatePromotion(Promotion $promotion, RActiveOn $activeOn, Request $request){
-        $node = "PetTool {toolId}".$request->get("id");
-        if($request->get('applyFor') == "pet"){
-            $node = "Pet {petId}".$request->get("id");
-        }
+    public function CreatePromotion(){
+        $data = json_decode(file_get_contents('php://input'), true);
+
         try{
-            $promotion->promotionId = (string)Str::uuid();
-            $result = $this->neo4j->run($this->queryDatasource["Promotion"]["CreatePromotion"],[$promotion, $activeOn, $node]);
+            $result = $this->neo4j->run($this->queryDatasource["Promotion"]["CreatePromotion"],[]);
             if($result > 0){
                 return response()->json('Success', "Tạo khuyến mãi thành công");
             }
@@ -57,13 +54,10 @@ class PromotionController extends Controller
     public function DeletePromotion($promotionId){
         try{
             $result = $this->neo4j->run($this->queryDatasource["promotion"]["Deletepromotion"],["id" => $promotionId]);
-            if($result > 0){
-                return response()->json('Success', "Xóa khuyến mãi thành công");
-            }
+            return response()->json('Inform', "Xóa khuyến mãi thành công");
         }catch(\Exception $e){
-            return response()->json('error', "Có lỗi");
+            return response()->json('Inform', "Có lỗi");
         }
         
-        return response()->json('fail', "Xóa khuyến mãi thất bại");
     }
 }

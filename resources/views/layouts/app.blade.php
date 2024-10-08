@@ -24,8 +24,8 @@
         <a href="/hop-dong" class="inline-flex items-center justify-center py-3 hover:text-gray-400 hover:bg-gray-700 focus:text-gray-400 focus:bg-gray-700 rounded-lg">
           <i class="fas fa-file-contract text-sm" title="Hợp đồng"></i>
         </a>
-        <a href="/san-pham" class="inline-flex items-center justify-center py-3 hover:text-gray-400 hover:bg-gray-700 focus:text-gray-400 focus:bg-gray-700 rounded-lg">
-          <span class="sr-only">Sản phẩm</span>
+        <a href="/hang-muc" class="inline-flex items-center justify-center py-3 hover:text-gray-400 hover:bg-gray-700 focus:text-gray-400 focus:bg-gray-700 rounded-lg">
+          <span class="sr-only">Hạng mục</span>
           <i class="fa-solid fa-briefcase text-white-900"></i>
         </a>
         <a href="/khuyen-mai" class="inline-flex items-center justify-center py-3 hover:text-gray-400 hover:bg-gray-700 focus:text-gray-400 focus:bg-gray-700 rounded-lg">

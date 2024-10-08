@@ -16,33 +16,18 @@
                         </svg>
                     </button>
                     <div id="filterDropdown" class="z-10 hidden px-3 pt-1 bg-white rounded-lg shadow w-80 dark:bg-gray-700 right-0">
-                        <div id="accordion-flush" data-accordion="collapse" data-active-classes="text-black dark:text-white" data-inactive-classes="text-gray-500 dark:text-gray-400">
-                            <div id="category-body" class="hidden" aria-labelledby="category-heading">
-                                <div class="py-2 font-light border-b border-gray-200 dark:border-gray-600">
-                                    <ul class="space-y-2" id="tableStatistic" onchange="LoadTableData(this.value)">
-                                        <li class="flex items-center">
-                                            <input id="apple" type="checkbox" value="" class="w-4 h-4 bg-gray-100 border-gray-300 rounded text-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
-                                            <label for="apple" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-100">Thú cưng</label>
-                                        </li>
-                                        <li class="flex items-center">
-                                            <input id="microsoft" type="checkbox" value="" class="w-4 h-4 bg-gray-100 border-gray-300 rounded text-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
-                                            <label for="microsoft" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-100">Thuốc</label>
-                                        </li>
-                                        <a href="#" class="flex items-center text-sm font-medium text-primary-600 dark:text-primary-500 hover:underline">Phụ kiện</a>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
+                        <a href="#" onclick="LoadTableData('/pet-revenue')" class="block px-4 py-2 text-sm text-gray-700" role="menuitem" tabindex="-1" id="menu-item-1">Thú cưng</a>
+                        <a href="#" onclick="LoadTableData('/pet-revenue')" class="block px-4 py-2 text-sm text-gray-700" role="menuitem" tabindex="-1" id="menu-item-2">Phụ kiện</a>
                     </div>
                 </div>
             </div>
             <div class="overflow-x-auto">
-                <table id="tableViewOption" class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                <table id="tableView" class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                     
                 </table>
             </div>
         </div>
     </div>
 </section>
-<script src="{{asset('js/porfolioChartScript.js')}}"></script>
+<script src="{{asset('js/porfolioChartConfig.js')}}"></script>
 @endsection

@@ -9,10 +9,25 @@ async function GetData(url){
   }
 
 function LoadTableData(value) {
-    let content = "";
-    GetData(document.getElementById("tableStatistic").value).then(data => {
+    const tableView = document.getElementById('tableView');
+    const value = document.getElementById("tableStatistic").value;
+    if(value.contains("pet") || value.contains("petTool"))
+    {
+        tableView.innerHTML += `<thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+        <tr>
+            <th scope="col" class="p-4">Tên sản phẩm</th>
+            <th scope="col" class="p-4">Giá bán</th>
+            <th scope="col" class="p-4">Số lượng còn</th>
+            <th scope="col" class="p-4">Số lượng đã bán</th>
+            <th scope="col" class="p-4">Danh sách hóa đơn</th>
+            <th scope="col" class="p-4">Doanh thu</th>
+        </tr>
+        </thead><tbody>${content}</tbody>`;
+
+        
+    GetData(value).then(data => {
         data.forEach((e)=>{
-            content += `
+            tableView.innerHTML += `
         <tr class="border-b dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700">
             <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                 <div class="flex items-center mr-3">
@@ -49,17 +64,19 @@ function LoadTableData(value) {
         })
 
     });
-    const tableBody = `<thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+
+    }
+    else{
+        tableView.innerHTML += `<thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                         <tr>
-                            <th scope="col" class="p-4">Tên sản phẩm</th>
-                            <th scope="col" class="p-4">Giá bán</th>
-                            <th scope="col" class="p-4">Số lượng còn</th>
-                            <th scope="col" class="p-4">Số lượng đã bán</th>
-                            <th scope="col" class="p-4">Danh sách hóa đơn</th>
-                            <th scope="col" class="p-4">Doanh thu</th>
+                            <th scope="col" class="p-4">Tên nhân viên</th>
+                            <th scope="col" class="p-4">Công vệc đã làm</th>
+                            <th scope="col" class="p-4">Vai trò</th>
+                            <th scope="col" class="p-4">Lương theo giờ</th>
+                            <th scope="col" class="p-4">Tổng giờ làm</th>
+                            <th scope="col" class="p-4">Lương tháng này</th>
+                            <th scope="col" class="p-4">Lịch sử</th>
                         </tr>
                     </thead><tbody>${content}</tbody>`;
-
-
-
+    }
 }

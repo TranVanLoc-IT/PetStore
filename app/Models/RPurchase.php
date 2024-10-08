@@ -8,5 +8,5 @@ use Illuminate\Database\Eloquent\Model;
 class RPurchase extends BaseEntity
 {
     use HasFactory;
-    protected $fillable = ['price', 'quantity'];
+    protected $fillable = ['quantity'];
 }
