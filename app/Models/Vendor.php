@@ -5,5 +5,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class Vendor extends BaseEntity
 {
-    protected $fillable = ['vendorName', 'address', 'phone'];
+    protected $fillable = ['vendorName', 'address', 'phone', 'vendorId'];
 }

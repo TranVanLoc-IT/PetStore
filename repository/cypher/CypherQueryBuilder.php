@@ -9,7 +9,7 @@ class CypherQueryBuilder implements ICypherQueryBuilder{
     //find
     public function match($criteria, $params = [])
     {
-        $this->query .= "MATCH ( " . $criteria . ")";
+        $this->query .= "MATCH (" . $criteria . ")";
         
     }
 
@@ -29,7 +29,7 @@ class CypherQueryBuilder implements ICypherQueryBuilder{
     // update
     public function updateNode($command, $data = []){}
     public function updateRelationship($command, $data = []){}   
-
+    
     // delete
     public function delete($criteria){}
     public function detachDelete(){}
@@ -42,7 +42,9 @@ class CypherQueryBuilder implements ICypherQueryBuilder{
     // return
     public function return($fields){}
     // query
-    public function getQuery(){}
+    public function getQuery(){
+        return $this->query;
+    }
      // parameters
      public function getParams(){}
 }

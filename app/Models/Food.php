@@ -6,6 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Food extends BaseEntity
 {
-    protected $fillable = ['id', 'foodName', 'price', 'availableQuantity'];
+    protected $fillable = ['foodId', 'foodName', 'price', 'availableQuantity'];
 }
 

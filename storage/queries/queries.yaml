@@ -1,0 +1,133 @@
+Dashboard:
+  GetStore: |
+    MATCH (s:Store) 
+    RETURN round(s.totalExpens, 1) AS expense, 
+           round(s.totalRevenue, 1) AS revenue
+  GetRevenueByMonths: |
+    MATCH (c:Transaction)-[e:INCOME]->(s:Store) 
+    WHERE toString(c.signingDate) =~ $date 
+    RETURN e.totalValue AS totalValue, 
+           c.signingDate AS date;
+  GetExpenseByMonths: |
+    MATCH (c:Transaction)-[e:EXPENSE]->(s:Store) 
+    WHERE toString(c.signingDate) =~ $date 
+    RETURN e.totalValue AS totalValue, 
+           c.signingDate AS date;
+  GetTotalPets: |
+    MATCH (p:Pet) 
+    OPTIONAL MATCH (i:Invoice)-[:PURCHASE]->(p) 
+    WITH SUM(i.totalAmount) AS sold, 
+         SUM(p.remainingStock) AS available 
+    RETURN sold, available;
+  GetPPRevenueByMonths: |
+    MATCH (i:Invoice WHERE toString(i.dateCreated) =~ $date)-[r:PURCHASE]->(p) 
+    WHERE p:Pet OR p:PetTool 
+    RETURN CASE 
+             WHEN p:Pet THEN 'Pet' 
+             ELSE 'PetTool' 
+           END AS productType, 
+           collect(toString(i.dateCreated)) AS invoiceDate, 
+           collect(r.price) AS revenue 
+    ORDER BY invoiceDate
+  GetStaffTopKPIList: |
+    MATCH (s:Staff)-[c:CREATED]->(i:Invoice) 
+    WHERE toString(c.dateCreated) =~ $date 
+    ORDER BY c.totalValue DESC 
+    LIMIT 3 
+    RETURN s.staffName AS staffName, 
+           c.totalValue AS totalValue;
+
+Invoice:
+  GetInvoices: |
+    MATCH(i:Invoice) 
+    WHERE toString(i.dateCreated) =~ $date 
+    RETURN i
+  GetSpecificInvoice: |
+    MATCH (t:Transaction)-[:PAY_FOR]->(i:Invoice)-[r:PURCHASE]->(p:Pet|PetTool) 
+    RETURN i, r, p, t
+  DeleteInvoice: |
+    MATCH (i:Invoice{id: $id})-[r]->(t:Transaction) 
+    DETACH DELETE t, i
+
+Staff:
+  GetStaffsWorking: |
+    MATCH (st:Staff)-[r:Role]->(:Store) 
+    OPTIONAL MATCH (st)-[sw:SHIFTWORK]->(:Service) 
+    WHERE toString(st.date) =~ $date 
+    WITH st, r, SUM(sw.hour) AS sumOfWorkHours, 
+         collect(date) AS dateWorks 
+    RETURN st, r, sumOfWorkHours, dateWorks
+  PaySalary: ""
+
+Product:
+  GetProducts: |
+    MATCH (i:Invoice WHERE toString(i.dateCreated) =~ $date)-[r:PURCHASE]->(p:Pet|PetTool) 
+    WITH i, sum(r.quantity) AS totalQuantitySold, 
+         sum(r.price) AS totalRevenue, 
+         p 
+    RETURN i, totalQuantitySold, totalRevenue, p
+  GetDetailProduct: ""
+
+Contract:
+  GetContracts: |
+   MATCH (c:Contract)-[o:OWNED_BY]->(v:Vendor) 
+    WITH toString(c.signingDate) AS signingDate, c, o, v
+    SKIP $skipValue 
+    LIMIT $limitValue 
+    RETURN c{.*, signingDate: signingDate} AS c, o, v
+
+  GetTotalContract: |
+    MATCH (c:Contract) 
+    RETURN COUNT(c) AS total;
+  GetDetailContract: |
+   MATCH (i:Pet|PetTool|Food)<-[p:PROVIDES]-(:Contract {contractId: $id}) 
+    WITH p.totalAmount AS totalAmount, p.totalPrice AS totalPrice,
+      CASE 
+        WHEN i:Pet THEN i.petName
+        WHEN i:PetTool THEN i.toolName
+        WHEN i:Food THEN i.foodName
+        ELSE NULL
+      END AS productName
+    RETURN {
+      productName: productName, 
+      totalAmount: totalAmount, 
+      totalPrice: totalPrice
+    } AS p
+
+  CreateNewContract: |
+    CREATE (:Contract {id: $id, 
+                       title: btrim($title,' '), 
+                       totalQuantity: $totalQuantity, 
+                       totalCost: $totalCost, 
+                       signingDate: $date, 
+                       amount})
+  ConfirmContract: |
+    MATCH (c:Contract {id: $id}) 
+    SET c.status = 'Duyệt'
+  DeleteContract: |
+    MATCH (c:Contract {id: $id}) 
+    DETACH DELETE c
+
+Promotion:
+  GetPromotions: |
+    MATCH (p:Promotion)-[a:ACTIVE_ON]->(pt) 
+    WITH p, a, 
+         toString(a.dateStart) AS dateStart, 
+         toString(a.dateEnd) AS dateEnd, 
+         CASE 
+           WHEN pt:Pet THEN pt.petName 
+           WHEN pt:PetTool THEN pt.toolName 
+           ELSE null 
+         END AS productApplies 
+    RETURN p, 
+           {dateStart: dateStart, dateEnd: dateEnd} AS a, 
+           collect(productApplies) as productApplies
+  DeletePromotion: |
+    MATCH (p:Promotion{id: $id}) 
+    DETACH DELETE p
+  AddPromotion: |
+    CREATE (:Promotion {id: $id, 
+                        value: $value, 
+                        description: $description, 
+                        title: $title})-[:ACTIVE_ON {dateStart: $dateStart, 
+                                                     dateEnd: $dateEnd}]->(:$node)

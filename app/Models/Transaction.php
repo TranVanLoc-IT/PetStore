@@ -6,6 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Transaction extends BaseEntity
 {
-    protected $fillable = ['id', 'moneyRecieved', 'type'];
+    protected $fillable = ['id', 'moneyRecieved', 'type', 'moneySent'];
 }
 

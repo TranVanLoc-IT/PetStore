@@ -7,5 +7,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class Service extends BaseEntity
 {
-    protected $fillable = ['id', 'serviceName', 'totalCost', 'totalTime'];
+    protected $fillable = ['serviceId', 'serviceName', 'totalCost', 'totalTime'];
 }

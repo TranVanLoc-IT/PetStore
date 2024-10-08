@@ -8,6 +8,5 @@ use Illuminate\Database\Eloquent\Model;
 class RActiveOn extends BaseEntity
 {
     use HasFactory;
-
-    protected $fillable = ['type', 'dateStart', 'dateEnd', 'condition'];
+    protected $fillable = ['dateStart', 'dateEnd'];
 }

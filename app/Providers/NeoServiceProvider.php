@@ -13,17 +13,12 @@ class NeoServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        // Đăng ký client của Neo4j vào container
         $this->app->singleton('neo4j', function ($app) {
             return ClientBuilder::create()
-                ->withDriver('bolt', sprintf('bolt://%s:%s@%s:%d', 
-                    env('NEO4J_USERNAME', 'neo4j'),
-                    env('NEO4J_PASSWORD', ''),
-                    env('NEO4J_HOST', 'localhost'),
-                    env('NEO4J_PORT', 7687)
-                ))
-                ->build();
+                ->withDriver('aura', env('NEO4J_URI'))  // Use the Aura URI directly
+                ->build();  // Don't forget to build the client
         });
+        
     }
 
     /**

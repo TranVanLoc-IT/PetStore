@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Contract extends BaseEntity
+class Invoice extends BaseEntity
 {
-    protected $fillable = ['id', 'title', 'totalCost', 'signingDate'];
+    protected $fillable = ['invoiceId', 'dateCreated', 'totalCost', 'totalAmount'];
 }
 
 

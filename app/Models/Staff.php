@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Staff extends BaseEntity
 {
-    protected $fillable = ['id', 'staffName', 'phone', 'seniority', 'yearIn', 'role'];
+    protected $fillable = ['staffId', 'staffName', 'phone', 'seniority', 'yearIn', 'active'];
 
 }
 

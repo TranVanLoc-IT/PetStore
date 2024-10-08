@@ -9,5 +9,5 @@ class RChargeOf extends BaseEntity
 {
     use HasFactory;
 
-    protected $fillable = ['dateWork', 'shiftWork'];
+    protected $fillable = [ "totalTimeWorked", "lastUpdatedTime"];
 }

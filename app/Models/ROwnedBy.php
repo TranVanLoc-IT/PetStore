@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class OwnedBy extends BaseModel
+class ROwnedBy extends Model
 {
-    protected $fillable = ['confirmStatus', 'productSupplyQuantity'];
+    protected $fillable = ['confirmStatus'];
 }

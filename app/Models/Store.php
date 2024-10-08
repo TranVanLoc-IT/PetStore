@@ -4,8 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Service extends BaseEntity
+class Store extends BaseEntity
 {
-    protected $fillable = ['id', 'serviceName', 'totalCost', 'totalTime'];
+    protected $fillable = ['totalExpense', 'totalRevenue', 'storeName', 'address'];
 }
 

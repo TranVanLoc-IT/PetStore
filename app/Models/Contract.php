@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Contract extends BaseEntity
 {
-    protected $fillable = ['id', 'title', 'totalCost', 'signingDate'];
-
+    protected $fillable = ['contractId', 'title', 'totalCost', 'signingDate', 'description', 'sellerName', 'phone'];
+    
 }
 
 

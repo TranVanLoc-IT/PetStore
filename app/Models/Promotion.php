@@ -6,6 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Promotion extends BaseEntity
 {
-    protected $fillable = ['id', 'value', 'description', 'title'];
+    protected $fillable = ['promotionId', 'value', 'description', 'title'];
 }
 

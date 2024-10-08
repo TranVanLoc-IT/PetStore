@@ -2,7 +2,7 @@
 @section("title", "Nhân viên")
 @section('content')
 <div class="container px-6 py-8 mx-auto">
-    <h3 class="text-3xl font-medium text-gray-700">Quản lí nhân viên</h3>
+    <h3 class="text-3xl font-medium text-gray-700">Thanh toán lương nhân viên</h3>
     <div class="mt-4">
         <div class="flex flex-wrap -mx-6">
             <div class="w-full px-6 sm:w-1/2 xl:w-1/3">
@@ -32,7 +32,7 @@
                     </div>
                     <div class="mx-5">
                         <h4 class="text-2xl font-semibold text-gray-700">8,282</h4>
-                        <div class="text-gray-500">New Users</div>
+                        <div class="text-gray-500">Đã chi trả</div>
                     </div>
                 </div>
             </div>
@@ -52,10 +52,6 @@
                                 fill="currentColor"></path>
                         </svg>
                     </div>
-                    <div class="mx-5">
-                        <h4 class="text-2xl font-semibold text-gray-700">200,521</h4>
-                        <div class="text-gray-500">Total Orders</div>
-                    </div>
                 </div>
             </div>
             <div class="w-full px-6 mt-6 sm:w-1/2 xl:w-1/3 xl:mt-0">
@@ -71,8 +67,8 @@
                         </svg>
                     </div>
                     <div class="mx-5">
-                        <h4 class="text-2xl font-semibold text-gray-700">215,542</h4>
-                        <div class="text-gray-500">Available Products</div>
+                        <h4 class="text-2xl font-semibold text-gray-700">{{sizeof($staffs)}}</h4>
+                        <div class="text-gray-500">Nhân viên hiện có</div>
                     </div>
                 </div>
             </div>
@@ -95,6 +91,9 @@
                                 Mã nhân viên</th>
                             <th
                                 class="px-6 py-3 text-xs font-medium leading-4 tracking-wider text-left text-gray-500 uppercase border-b border-gray-200 bg-gray-50">
+                                Thâm niên - Năm vào</th>
+                            <th
+                                class="px-6 py-3 text-xs font-medium leading-4 tracking-wider text-left text-gray-500 uppercase border-b border-gray-200 bg-gray-50">
                                 Chức vụ</th>
                             <th
                                 class="px-6 py-3 text-xs font-medium leading-4 tracking-wider text-left text-gray-500 uppercase border-b border-gray-200 bg-gray-50">
@@ -107,20 +106,18 @@
                             <tr>
                                 <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-200">
                                     <div class="flex items-center">
-                                        <div class="flex-shrink-0 w-10 h-10">
-                                            <img class="w-10 h-10 rounded-full"
-                                                src="{{$staff->image}}"
-                                                alt="">
-                                        </div>
                                         <div class="ml-4">
                                             <div class="text-sm font-medium leading-5 text-gray-900">{{$staff->name}}
                                             </div>
-                                            <div class="text-sm leading-5 text-gray-500">{{$staff->email}}</div>
+                                            <div class="text-sm leading-5 text-gray-500">{{$staff->phone}}</div>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-200">
-                                    <div class="text-sm leading-5 text-gray-900">{{$staff->id}}</div>
+                                    <div class="text-sm leading-5 text-gray-900">{{$staff->staffId}}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-200">
+                                    <div class="text-sm leading-5 text-gray-900">{{$staff->seniority}} - {{$staff->yearIn}}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-200">
                                     <span
@@ -144,4 +141,7 @@
         </div>
     </div>
 </div>
+<script src="{{asset('public/js/staffScript.js')}}">
+
+</script>
 @endsection
