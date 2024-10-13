@@ -1,25 +1,26 @@
 Dashboard:
   GetStore: |
-    MATCH (s:Store) 
-    RETURN round(s.totalExpens, 1) AS expense, 
-           round(s.totalRevenue, 1) AS revenue
-  GetRevenueByMonths: |
+    MATCH (t:Transaction)
+    WHERE toString(t.timeCreated) =~ $date
+    RETURN SUM(t.moneyRecieved) as revenue,
+            SUM(t.moneySent) as expense
+  GetRevenueByMonth: |
     MATCH (c:Transaction)-[e:INCOME]->(s:Store) 
-    WHERE toString(c.signingDate) =~ $date 
-    RETURN e.totalValue AS totalValue, 
-           c.signingDate AS date;
-  GetExpenseByMonths: |
+      WHERE toString(c.timeCreated) =~ $date
+      RETURN collect(c.moneyRecieved) AS totalValue, 
+            collect(apoc.temporal.format(c.timeCreated, 'dd-MM-yyyy')) AS date;
+  GetExpenseByMonth: |
     MATCH (c:Transaction)-[e:EXPENSE]->(s:Store) 
-    WHERE toString(c.signingDate) =~ $date 
-    RETURN e.totalValue AS totalValue, 
-           c.signingDate AS date;
+    WHERE toString(c.timeCreated) =~ $date
+    RETURN collect(c.moneySent) AS totalValue, 
+           collect(apoc.temporal.format(c.timeCreated, 'dd-MM-yyyy')) AS date;
   GetTotalPets: |
-    MATCH (p:Pet) 
+    MATCH (p:Pet|PetTool|Food) 
     OPTIONAL MATCH (i:Invoice)-[:PURCHASE]->(p) 
     WITH SUM(i.totalAmount) AS sold, 
-         SUM(p.remainingStock) AS available 
+         SUM(p.availableQuantity) AS available 
     RETURN sold, available;
-  GetPPRevenueByMonths: |
+  GetPPRevenueByMonth: |
     MATCH (i:Invoice WHERE toString(i.dateCreated) =~ $date)-[r:PURCHASE]->(p) 
     WHERE p:Pet OR p:PetTool 
     RETURN CASE 
@@ -29,13 +30,14 @@ Dashboard:
            collect(toString(i.dateCreated)) AS invoiceDate, 
            collect(r.price) AS revenue 
     ORDER BY invoiceDate
-  GetStaffTopKPIList: |
-    MATCH (s:Staff)-[c:CREATED]->(i:Invoice) 
-    WHERE toString(c.dateCreated) =~ $date 
-    ORDER BY c.totalValue DESC 
+  GetPetTopKPIList: |
+    MATCH (s:Pet)<-[c:PURCHASE]-(i:Invoice) 
+    WHERE toString(i.dateCreated) =~ $date 
+    WITH s, sum(i.totalCost) as total
+    ORDER BY total DESC 
     LIMIT 3 
-    RETURN s.staffName AS staffName, 
-           c.totalValue AS totalValue;
+    RETURN s.petName AS petName,  s.img AS img,
+           total AS totalValue;
 
 Invoice:
   GetInvoices: |
@@ -47,13 +49,14 @@ Invoice:
     dateCreated: apoc.temporal.format(i.dateCreated, 'dd-MM-yyyy HH:mm:ss'),
     totalCost: i.totalCost } AS i
   GetDetailInvoice: |
-   MATCH (t:Transaction)-[rp:PAY_FOR]->(i:Invoice {invoiceId: $id})-[r:PURCHASE]->(p:Pet|PetTool) 
+   MATCH (t:Transaction)-[rp:PAY_FOR]->(i:Invoice {invoiceId: $id})-[r:PURCHASE]->(p:Pet|PetTool|Food) 
     WITH 
         {transactionId: t.transactionId, moneyRecieved: t.moneyRecieved, status: rp.status, type: t.type} AS transaction,
         {
             productName: CASE 
                             WHEN p:Pet THEN p.petName 
                             WHEN p:PetTool THEN p.toolName 
+                            WHEN p:Food THEN p.foodName 
                             ELSE NULL 
                         END,
             price: p.price, 
@@ -67,31 +70,54 @@ Invoice:
 
 Staff:
   GetStaffsWorking: |
-    MATCH (st:Staff)-[r:Role]->(:Store) 
-    OPTIONAL MATCH (st)-[sw:SHIFTWORK]->(:Service) 
-    WHERE toString(st.date) =~ $date 
-    WITH st, r, SUM(sw.hour) AS sumOfWorkHours, 
-         collect(date) AS dateWorks 
-    RETURN st, r, sumOfWorkHours, dateWorks
-  PaySalary: ""
+    // không để DK date sau OPTIONAL MATCH: ko co -> null, de sau -> tra ve het, MATCH: ko có -> ko trả về
+    // muc dich -> co hay khong thi van phai tra ve ds nhan vien, role, salary
+    MATCH (st:Staff)-[r:ROLE]->(:Store)
+    OPTIONAL MATCH (st)<-[:PAY_SALARY]-(t:Transaction WHERE toString(t.timeCreated) =~ $date)
+    OPTIONAL MATCH (st)-[sw:SHIFTWORK WHERE toString(sw.date) =~ $date ]->()
+    WITH st, 
+        COALESCE(COLLECT({date:toString(sw.date), hour:sw.hour, phase: sw.phase}), []) AS shiftworks, 
+        t.transactionId AS paid, 
+        r.roleName AS role, 
+        r.salary AS salary
+    RETURN st, role, salary, shiftworks, paid
+
+  PaySalary: |
+    // không được nối trực tiếp nút staff -> nó sẽ tạo mới
+    MATCH(s:Staff{staffId: $staffId})
+    CREATE(:Transaction {transactionId: $id, moneyRecieved: 0, moneySent: $money, type: 'Banking',timeCreated: datetime($date)})
+    -[:PAY_SALARY]->(s)
 
 Product:
   GetProducts: |
     MATCH (i:Invoice WHERE toString(i.dateCreated) =~ $date)-[r:PURCHASE]->(p:Pet|PetTool) 
-    WITH collect(i) as invoiceList, sum(r.quantity) AS totalQuantitySold, 
+    WITH collect(i.invoiceId) as invoiceList, sum(r.quantity) AS totalQuantitySold, 
          sum(r.price) AS totalRevenue, 
          p 
     RETURN invoiceList, totalQuantitySold, totalRevenue, p
-  GetDetailProduct: ""
+  GetAllProductName: |
+    MATCH(p:Pet | PetTool | Food)
+    RETURN CASE
+          WHEN p:Pet THEN p.petName
+          WHEN p:Food THEN p.foodName
+          ELSE p.toolName END AS name
+  UpdateProductPrice: |
+    MATCH (p)
+    WHERE (p:Pet AND p.petId = $id) 
+      OR (p:PetTool AND p.toolId = $id) 
+      OR (p:Food AND p.foodId = $id)
+    SET p.price = $newPrice
+
 
 Contract:
   GetContracts: |
    MATCH (c:Contract)-[o:OWNED_BY]->(v:Vendor) 
     WITH toString(c.signingDate) AS signingDate, c, o, v
-    SKIP $skipValue 
-    LIMIT $limitValue 
     RETURN c{.*, signingDate: signingDate} AS c, o, v
-
+  GetContractWithFilter: |
+    MATCH (c:Contract)-[o:OWNED_BY{confirmStatus:$criteria}]->(v:Vendor) 
+      WITH toString(c.signingDate) AS signingDate, c, o, v
+      RETURN c{.*, signingDate: signingDate} AS c, o, v
   GetTotalContract: |
     MATCH (c:Contract) 
     RETURN COUNT(c) AS total;
@@ -109,32 +135,45 @@ Contract:
       totalAmount: totalAmount, 
       totalPrice: totalPrice
     } AS p
+  FindContractNode: |
+    MATCH(c:Contract{contractId: '$contractId'})
+  CreateContractToPetRelationship: |
+    CREATE (c)-[:PROVIDES{amount:$totalAmount, priceImport:$totalCost}]->(:Pet{petId: '$id'})
+  CreateContractToPetToolRelationship: |
+    CREATE (c)-[:PROVIDES{amount:$totalAmount, priceImport:$totalCost}]->(:PetTool{toolId: '$id'})
+  CreateContractToFoodRelationship: |
+    CREATE (c)-[:PROVIDES{amount:$totalAmount, priceImport:$totalCost}]->(:Food{foodId: '$id'})
 
-  CreateNewContract: |
-    CREATE (:Contract {contractId: $id, 
-                       title: btrim($title,' '), 
-                       totalQuantity: $totalQuantity, 
+  CreateCustomerContract: |
+    CREATE (:Contract {contractId: $contractId, 
+                       title: replace(trim($title), "  ", " "),
                        totalCost: $totalCost, 
-                       signingDate: $date, 
-                       amount})-[:$ownedBy]-(:$vendor)
-  CreateIncludeRelationShip: |
-                    CREATE (:Contract {contractId: $id, 
-                       title: btrim($title,' '), 
-                       totalQuantity: $totalQuantity, 
+                       signingDate: $signingDate, 
+                       sellerName: $sellerName,
+                       phone: $phone,
+                       description: $description,
+                       image: $image})
+  CreateVendorContract: |
+    MATCH (v:Vendor{vendorId: $vendorId}) 
+    CREATE (:Contract {contractId: $contractId, 
+                       title: replace(trim($title), "  ", " "),
                        totalCost: $totalCost, 
-                       signingDate: $date, 
-                       amount})-[:$ownedBy]
+                       signingDate: $signingDate,
+                       description: $description,
+                       image: $image})-[:OWNED_BY{confirmStatus: false}]->(v)
   ConfirmContract: |
-    MATCH (c:Contract {contractId: $id}) 
-    SET c.status = 'Duyệt'
+    MATCH (c:Contract {contractId: $id})-[r:OWNED_BY]->(), (s:Store)
+    SET s.expense = s.expense + c.totalCost
+    SET r.confirmStatus = true
   DeleteContract: |
     MATCH (c:Contract {contractId: $id}) 
     DETACH DELETE c
 
 Promotion:
   GetPromotions: |
-    MATCH (p:Promotion)-[a:ACTIVE_ON]->(pt) 
-    WITH p, a, 
+    MATCH (p:Promotion)-[a:ACTIVE_ON]->(pt)
+    OPTIONAL MATCH (p)-[d:DISCOUNT]->(i:Invoice)
+    WITH p, a, d, i,
          toString(a.dateStart) AS dateStart, 
          toString(a.dateEnd) AS dateEnd, 
          CASE 
@@ -144,13 +183,84 @@ Promotion:
          END AS productApplies 
     RETURN p, 
            {dateStart: dateStart, dateEnd: dateEnd} AS a, 
-           collect(productApplies) as productApplies
+           collect(DISTINCT productApplies) as productApplies,{discount: SUM(d.discountValue), invoices: COUNT(i),
+           profit: SUM(i.totalCost)} as specifications
   DeletePromotion: |
-    MATCH (p:Promotion{id: $id}) 
+    MATCH (p:Promotion{promotionId: $id}) 
     DETACH DELETE p
-  AddPromotion: |
-    CREATE (:Promotion {id: $id, 
-                        value: $value, 
-                        description: $description, 
-                        title: $title})-[:ACTIVE_ON {dateStart: $dateStart, 
-                                                     dateEnd: $dateEnd}]->(:$node)
+  CreatePetPromotion: |
+    CREATE (p:Promotion {promotionId: $promotionId, 
+            value: $value, 
+            description: $description, 
+            title: $title})
+            WITH p, $criterias AS criterias
+            UNWIND criterias AS criteria  
+            MERGE (p)-[r:ACTIVE_ON {dateStart: date($dateStart),  
+                    dateEnd: date($dateEnd)}]->(:Pet{petName: criteria})  // Tạo mối quan hệ với Promotion
+  CreatePetToolPromotion: |
+    CREATE (p:Promotion {promotionId: $promotionId, 
+         value: $value, 
+         description: $description, 
+         title: $title})
+         WITH p, $criterias AS criterias
+         UNWIND criterias AS criteria  
+         MERGE (p)-[r:ACTIVE_ON {dateStart: date($dateStart),  
+                                dateEnd: date($dateEnd)}]->(:PetTool{toolId: criteria})
+Export:
+  ProductRevenue: |
+    MATCH (n:Pet|PetTool|Food)
+    OPTIONAL MATCH (n)<-[r:PURCHASE]-(i:Invoice)
+    WHERE toString(i.dateCreated) =~ $date OR i IS NULL
+    WITH n, r, i, collect(toString(i.dateCreated)) AS invoiceDates
+    RETURN 
+      CASE 
+        WHEN n:Pet THEN n.petName 
+        WHEN n:PetTool THEN n.toolName 
+        WHEN n:Food THEN n.foodName 
+        ELSE "" 
+      END AS name, 
+      coalesce(r.quantity, 0) AS quantitySold, 
+      n.availableQuantity AS availableQuantity,
+      invoiceDates AS dates,
+      coalesce(sum(i.totalCost), 0) AS totalRevenue,
+      [i IN invoiceDates | CASE 
+                            WHEN i IN invoiceDates THEN i 
+                            ELSE 0 
+                          END] AS values
+
+  StoreRevenue: | 
+    MATCH (n:Contract | Invoice)<-[pa:PAY_FOR]-(t:Transaction)-[:INCOME | EXPENSE]->(s:Store)
+    OPTIONAL MATCH (n)-[r:PROVIDES | PURCHASE]->(p:Pet | PetTool | Food)
+    WITH n, s, r, t, pa, p,
+        CASE 
+            WHEN p IS NOT NULL AND p:Pet THEN p.petName 
+            WHEN p IS NOT NULL AND p:PetTool THEN p.toolName 
+            WHEN p IS NOT NULL AND p:Food THEN p.foodName 
+            ELSE NULL 
+        END AS productName,
+        CASE 
+            WHEN n:Contract AND toString(n.signingDate) =~ $date THEN n.signingDate
+            WHEN n:Invoice AND toString(n.dateCreated) =~ $date THEN n.dateCreated
+            ELSE NULL
+        END AS dateCreated,
+        CASE 
+            WHEN n:Contract THEN "Hợp đồng - " + n.contractId 
+            WHEN n:Invoice THEN "Hóa đơn - " + n.invoiceId 
+            ELSE "" 
+        END AS name,
+        n.totalCost AS totalCost,
+        r.totalAmount AS amount
+        WHERE dateCreated IS NOT NULL
+        RETURN 
+        name, 
+        totalCost, 
+        t.transactionId AS tranId,
+        t.type AS method,
+        pa.status AS status,
+        toString(dateCreated) as dateCreated,
+        collect(productName) AS productName, 
+        collect(amount) AS amounts
+
+
+
+

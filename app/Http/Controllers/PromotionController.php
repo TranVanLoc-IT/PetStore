@@ -15,15 +15,17 @@ class PromotionController extends Controller
     public function GetPromotion(){
         $promotions = [];
         $activeOns = [];
+        $specifications = [];
         $productApplies = [];
         $records = $this->neo4j->run($this->queryDatasource["Promotion"]["GetPromotions"]);
         foreach ($records as $record){
             $promotion = new Promotion($record->Get("p")->GetProperties()->toArray());
             $activeOn[$promotion->promotionId] = new RActiveOn($record->Get("a")->toArray());
             $productApplies[$promotion->promotionId] = $record->Get("productApplies");
+            $specifications[$promotion->promotionId] = $record->Get("specifications");
             array_push($promotions, $promotion);
         }
-        return view('promotionView', ['promotions'=> $promotions, "productApplies"=> $productApplies, "activeOn"=> $activeOn]);
+        return view('promotionView', ['promotions'=> $promotions, "productApplies"=> $productApplies, "activeOn"=> $activeOn, "specifications" => $specifications]);
     }
 
     /**
@@ -31,19 +33,28 @@ class PromotionController extends Controller
      * @param \App\Models\Promotion $promotion
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function CreatePromotion(){
-        $data = json_decode(file_get_contents('php://input'), true);
-
-        try{
-            $result = $this->neo4j->run($this->queryDatasource["Promotion"]["CreatePromotion"],[]);
-            if($result > 0){
-                return response()->json('Success', "Tạo khuyến mãi thành công");
-            }
-        }catch(\Exception $e){
-            return response()->json('error', "Có lỗi");
+    public function CreatePromotion(Request $request){
+        $query = $this->queryDatasource["Promotion"]["CreatePetToolPromotion"];
+        if($request->input("productType") == "Pet")
+        {
+            $query = $this->queryDatasource["Promotion"]["CreatePetPromotion"];
         }
+        $dataFields = [
+            "promotionId"  => (string)Str::uuid(), 
+            "value" => $request->input("value"), 
+            "description" => $request->input("description"), // Sửa chính tả
+            "title" => $request->input("title"),
+            "dateStart" => $request->input("dateStart"),
+            "dateEnd" => $request->input("dateEnd"),
+            "criterias" => $request->input("node")
+        ];
         
-        return response()->json('fail', "Tạo khuyến mãi thất bại");
+        try {
+            $result = $this->neo4j->run($query, $dataFields);
+            return response()->json(["Inform" => "Thành công", "promotionId" => $dataFields["promotionId"]],200);
+        }catch(\Exception $e){
+            return response()->json(['Inform' => "Có lỗi: " + $e->getMessage()], 404);
+        }
     }
 
     /**
@@ -51,13 +62,14 @@ class PromotionController extends Controller
      * @param mixed $promotionId
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function DeletePromotion($promotionId){
+    public function DeletePromotion($id){
+        $criteria = ["id" => $id];
         try{
-            $result = $this->neo4j->run($this->queryDatasource["promotion"]["Deletepromotion"],["id" => $promotionId]);
-            return response()->json('Inform', "Xóa khuyến mãi thành công");
+            $result = $this->neo4j->run($this->queryDatasource["Promotion"]["DeletePromotion"],$criteria);
+            return response()->json(['Inform'=>"Xóa khuyến mãi thành công"], 200);
         }catch(\Exception $e){
-            return response()->json('Inform', "Có lỗi");
+            return response()->json(['Inform'=>"Có lỗi"], 404);
         }
-        
+
     }
 }

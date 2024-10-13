@@ -1,24 +1,29 @@
-async function ViewDetail(contract){
+let addProductBlock = "";
+const PAGE_SIZE = 5;
+let currentPage = 1;
+let currentPageElement = null;
+async function ViewDetail(contractId) {
     try {
-      const response = await fetch('/hop-dong/chi-tiet/'+contract["contractId"]);
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error(error);
-    }
-  }
-async function GetDropdownData(url){
-    try {
-        const response = await fetch('/hop-dong/du-lieu'+url);
+        const response = await fetch('/hop-dong/chi-tiet/' + contractId);
         const data = await response.json();
         return data;
-      } catch (error) {
+    } catch (error) {
         console.error(error);
-      }
+    }
 }
-function GetViewDetail(contract, vendor) {
-    contract = JSON.parse(contract);
-    ViewDetail(contract).then(res=>{
+
+async function GetDropdownData(table) {
+    try {
+        const response = await fetch('/hop-dong/du-lieu' + table);
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+function GetViewDetail(contractId, vendorName) {
+    ViewDetail(contractId).then(res => {
         var productList = "";
         res.forEach((e) => {
             productList += `<div class="p-3 bg-gray-100 rounded-lg border border-gray-200 dark:bg-gray-700 dark:border-gray-600"><dt class="mb-2 font-semibold leading-none text-gray-900 dark:text-white">Đối tác: </dt><dd class="text-gray-500 dark:text-gray-400">
@@ -30,77 +35,246 @@ function GetViewDetail(contract, vendor) {
                 ${productList}
             </div>
             <dl class="grid grid-cols-2 gap-4 mb-4">
-                <div class="p-3 bg-gray-100 rounded-lg border border-gray-200 dark:bg-gray-700 dark:border-gray-600"><dt class="mb-2 font-semibold leading-none text-gray-900 dark:text-white">Đối tác: </dt><dd class="text-gray-500 dark:text-gray-400 vendorViewInfo">${vendor["vendorName"]}</dd></div>
-                <div class="p-3 bg-gray-100 rounded-lg border border-gray-200 dark:bg-gray-700 dark:border-gray-600"><dt class="mb-2 font-semibold leading-none text-gray-900 dark:text-white">Tổng giá trị: </dt><dd class="text-gray-500 dark:text-gray-400 totalCostViewInfo">${contract["totalCost"]}</dd></div>
+                <div class="p-3 bg-gray-100 rounded-lg border border-gray-200 dark:bg-gray-700 dark:border-gray-600"><dt class="mb-2 font-semibold leading-none text-gray-900 dark:text-white">Đối tác: </dt><dd class="text-gray-500 dark:text-gray-400 vendorViewInfo">${vendorName}</dd></div>
             </dl>`;
         document.getElementById('view-detail-contract').innerHTML = content;
     });
 }
 
 
-function DeleteContract(id){
-    if(confirm("Xác nhận xóa") === true){
+function DeleteContract(id) {
+    if (confirm("Xác nhận xóa") === true) {
         Delete(id);
-        document.getElementById("row-"+ id).remove();
+        document.getElementById("row-" + id).remove();
     }
 }
 
-function ConfirmContract(id){
-        fetch('/hop-dong/edit', {
+function ConfirmContract(id) {
+    fetch('/hop-dong/update', {
             method: 'PUT',
             headers: {
                 'X-CSRF-TOKEN': token,
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ contractId: id }), // Send the ID in the request body
+            body: JSON.stringify({
+                contractId: id
+            }), // Send the ID in the request body
         })
-        .then(response=>response.json())
-        .then(response=>{
+        .then(response => response.json())
+        .then(response => {
             let updateButtonStatus = document.getElementById("update-" + id);
-            updateButtonStatus.innerText = 'Duyệt';
+            updateButtonStatus.innerHTML = `<button disabled type="button" class="py-2 px-3 flex items-center text-sm font-medium text-center text-white bg-primary-700 rounded-lg hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 -ml-0.5" viewbox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                                                <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
+                                            </svg>
+                                            Đã duyệt
+                                        </button>`;
             updateButtonStatus.classList.replace('bg-amber-700', 'bg-primary-700');
             updateButtonStatus.classList.replace('bg-amber-600', 'bg-primary-600');
-            alert(response.Inform);
+            SAlertMessage.innerText = response.Inform;
+            SAlertBlock.classList.remove('hidden');
+
+            // Sau 2 giây (2000ms), ẩn thông báo
+            setTimeout(() => {
+                SAlertBlock.classList.add('hidden');
+            }, 2000);
         })
-        .catch(err => alert(err));
+        .catch(err => {
+            EAlertMessage.innerText = err;
+            EAlertBlock.classList.remove('hidden');
+
+            // Sau 2 giây (2000ms), ẩn thông báo
+            setTimeout(() => {
+                EAlertBlock.classList.add('hidden');
+            }, 2000);
+        });
 }
 
-function Delete(id){
-    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        fetch('/hop-dong/edit', {
+function Delete(id) {
+    fetch('/hop-dong/delete', {
             method: 'DELETE',
             headers: {
                 'X-CSRF-TOKEN': token,
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ contractId: id }), // Send the ID in the request body
+            body: JSON.stringify({
+                contractId: id
+            }), // Send the ID in the request body
         })
-        .then(response=>response.json())
-        .then(response=>alert(response.Inform))
-        .catch(err => alert(err));
+        .then(response => response.json())
+        .then(response => {
+            SAlertMessage.innerText = response.Inform;
+            SAlertBlock.classList.remove('hidden');
+            Pagination(currentPageElement, currentPage);
+            // Sau 2 giây (2000ms), ẩn thông báo
+            setTimeout(() => {
+                SAlertBlock.classList.add('hidden');
+                2
+            }, 2000);
+        })
+        .catch(err => {
+            EAlertMessage.innerText = err;
+            EAlertBlock.classList.remove('hidden');
+
+            // Sau 2 giây (2000ms), ẩn thông báo
+            setTimeout(() => {
+                EAlertBlock.classList.add('hidden');
+            }, 2000);
+        });
 }
 
-function CreateContract(){
-    const formData = new FormData(document.getElementById('create-contract-form'));
-    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        fetch('/hop-dong/edit', {
+document.getElementById('create-contract-form').addEventListener('submit', function (event) {
+    event.preventDefault();
+    const formData = new FormData(this);
+    fetch('/hop-dong/insert', {
             method: 'POST',
             headers: {
-                'X-CSRF-TOKEN': token,
-                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': token
             },
-            body: JSON.stringify(formData), // Send the ID in the request body
+            body: formData, // Send the ID in the request body
         })
-        .then(response=>response.json())
-        .then(response=>alert(response.Inform))
-        .catch(err => alert(err));
-}
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Lỗi");
+            }
+            return response.json();
+        })
+        .then(response => {
+            this.reset();
+            SAlertMessage.innerText = response.Inform;
+            SAlertBlock.classList.remove('hidden');
 
-function CreateVendorInfoForm(){
+            // Sau 2 giây (2000ms), ẩn thông báo
+            setTimeout(() => {
+                SAlertBlock.classList.add('hidden');
+            }, 2000);
+
+        })
+        .catch(err => {
+            EAlertMessage.innerText = err;
+            EAlertBlock.classList.remove('hidden');
+
+            // Sau 2 giây (2000ms), ẩn thông báo
+            setTimeout(() => {
+                EAlertBlock.classList.add('hidden');
+            }, 2000);
+        });
+});
+
+
+function InitPagination() {
+    if (PAGE_SIZE > TOTAL_SIZE) {
+        document.querySelector('.no-pag').classList.remove('hidden');
+        document.querySelectorAll('.pag-des')[1].innerText = `1 - ${TOTAL_SIZE} trong ${TOTAL_SIZE} kết quả`;
+    } else {
+        let hPag = document.querySelector('.have-pag')
+        hPag.classList.remove('hidden');
+        for (let i = 2; i < (TOTAL_SIZE / PAGE_SIZE) - 1; i++) {
+            hPag.innerHTML += `<li>
+                                <a onclick="Pagination(this,$count)" class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">${i}</a>
+                            </li>`;
+        }
+        hPag.innerHTML += ` <li>
+                                <a id="next" onclick="Pagination(this,'next')" class="flex items-center justify-center h-full py-1.5 px-3 leading-tight text-gray-500 bg-white rounded-r-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
+                                    <span class="sr-only">Tiếp</span>
+                                    <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                            </li>`;
+        document.querySelectorAll('.pag-des')[0].innerText = `${((PAGE_SIZE * currentPage) - PAGE_SIZE) + 1} - ${PAGE_SIZE * currentPage} trong ${TOTAL_SIZE} kết quả`;
+    }
+}
+InitPagination();
+
+function Pagination(e, index) {
+    if (isNaN(index)) {
+        if (index == "previous") {
+            currentPage--;
+            if (currentPage == 0)
+                document.getElementById('previous').disabled = true;
+        } else {
+            currentPage++;
+            if (currentPage >= ((TOTAL_SIZE / PAGE_SIZE)))
+                document.getElementById('next').disabled = true;
+
+        }
+    }
+    let dataTable = document.getElementById('contract-table-body');
+    dataTable.innerHTML = "";
+    if (e != null) {
+        e.classList.add('bg-green-300', 'opacity-50');
+        currentPageElement = e;
+    }
+    dataTable.innerHTML = "";
+    for (let count = index; count < PAGE_SIZE * index; count++) {
+        let tr = document.createElement('tr');
+        tr.id = `row-${DATA[count].contractId}`;
+        tr.className = 'border-b dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700';
+        tr.innerHTML = `<td scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                <div class="flex items-center mr-3">
+                                ${DATA[count].contractId}
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                <div class="flex items-center">
+                                ${DATA[count].title}
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">${DATA[count].totalCost}</td>
+                            <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                            ${DATA[count].signingDate}
+                            </td>
+                            <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                            ${
+
+                                DATA_OWNEDBY[DATA[count].contractId].confirmStatus ?`
+                                    <button class="py-2 px-3 flex items-center text-sm font-medium text-center text-white bg-primary-700 rounded-lg hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 -ml-0.5" viewbox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                                            <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
+                                        </svg>
+                                        Đã duyệt
+                                    </button>`
+                                :
+                                `<button id="update-${DATA[count].contractId}" onclick="ConfirmContract('${DATA[count].contractId}')" type="button" data-drawer-target="drawer-update-product" data-drawer-show="drawer-update-product" aria-controls="drawer-update-product" class="py-2 px-3 flex items-center text-sm font-medium text-center text-white bg-amber-700 rounded-lg hover:bg-amber-800 focus:ring-4 focus:outline-none focus:ring-amber-300 dark:bg-amber-600 dark:hover:bg-amber-700 dark:focus:ring-amber-800">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 -ml-0.5" viewbox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                                        <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
+                                    </svg>
+                                    Chờ duyệt
+                                </button>`
+                            }
+                            </td>
+                            <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                <div class="flex items-center space-x-4">
+                                    <button onclick="GetViewDetail('${DATA[count].contractId}','${DATA_VENDOR[DATA[count].contractId].vendorName}')" type="button" id="viewProductButton" data-modal-toggle="viewContractModel" class="flex items-center justify-center text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-primary-600 dark:hover:bg-primary-700 focus:outline-none dark:focus:ring-primary-800">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 24 24" fill="currentColor" class="w-4 h-4 mr-2 -ml-0.5">
+                                            <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                                            <path fill-rule="evenodd" clip-rule="evenodd" d="M1.323 11.447C2.811 6.976 7.028 3.75 12.001 3.75c4.97 0 9.185 3.223 10.675 7.69.12.362.12.752 0 1.113-1.487 4.471-5.705 7.697-10.677 7.697-4.97 0-9.186-3.223-10.675-7.69a1.762 1.762 0 010-1.113zM17.25 12a5.25 5.25 0 11-10.5 0 5.25 5.25 0 0110.5 0z" />
+                                        </svg>
+                                        Xem
+                                    </button>
+                                    
+                                    <button onclick="DeleteContract('${DATA[count].contractId}')" type="button" class="flex items-center text-red-700 hover:text-white border border-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-3 py-2 text-center dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-900">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 -ml-0.5" viewbox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                        </svg>
+                                        Xóa
+                                    </button>
+                                </div>
+                            </td>`;
+        dataTable.appendChild(tr);
+    }
+}
+Pagination(null, 1);
+
+function CreateVendorInfoForm() {
     const typeOpt = document.getElementById('vendorType');
     const companyOpt = document.getElementById('vendorId');
     const sellerOpt = document.getElementById('cVendor');
-    if(typeOpt.value == "company"){
+    if (typeOpt.value == "company") {
         companyOpt.innerHTML = "";
         GetDropdownData("/vendor").then(data => {
             data.forEach(vendor => {
@@ -108,95 +282,105 @@ function CreateVendorInfoForm(){
             });
         });
         companyOpt.classList.remove("hidden");
-        if(IsDisplayCreateVendorInfoForm(sellerOpt)){
+        if (IsDisplayCreateVendorInfoForm(sellerOpt)) {
             sellerOpt.classList.add("hidden");
         }
-    }
-    else{
+    } else {
         sellerOpt.classList.remove("hidden");
-        if(IsDisplayCreateVendorInfoForm(companyOpt)){
+        if (IsDisplayCreateVendorInfoForm(companyOpt)) {
             companyOpt.classList.add("hidden");
         }
     }
 }
 
-function IsDisplayCreateVendorInfoForm(form){
-    if(form.classList.contains("hidden")){
+function IsDisplayCreateVendorInfoForm(form) {
+    if (form.classList.contains("hidden")) {
         return false;
     }
     return true;
 }
 
-function LoadCreateProductListForm(){
+function LoadCreateProductListForm() {
     const createOpt = document.getElementById('productType');
     const createForm = document.getElementById('productSupplies');
     let dropdownContent = "";
-    switch(createOpt.value){
+    switch (createOpt.value) {
         case "food":
             GetDropdownData("/food").then(data => {
                 data.forEach(food => {
-                    dropdownContent += `<option name="productName[]" id="productName[]" value="${food["foodId"]}">${food["foodName"]}</option>`
+                    dropdownContent += `<option value="${food["foodId"]}">${food["foodName"]}</option>`
                 });
                 AssignCreateProductContent(createForm, dropdownContent);
             });
             break;
-            case "pet":
-                GetDropdownData("/pet").then(data => {
-                    data.forEach(pet => {
-                        dropdownContent += `<option name="productName[]" id="productName[]" value="${pet["petName"]}">${pet["petName"]}</option>`
-                    });
-                    
+        case "pet":
+            GetDropdownData("/pet").then(data => {
+                data.forEach(pet => {
+                    dropdownContent += `<option value="${pet["petId"]}">${pet["petName"]}</option>`
                 });
                 AssignCreateProductContent(createForm, dropdownContent);
+            });
             break;
-            case "tool":
-                GetDropdownData("/petTool").then(data => {
-                    data.forEach(petTool => {
-                        dropdownContent += `<option name="productName[]" id="productName[]" value="${petTool["toolId"]}">${petTool["toolName"]}</option>`
-                    });
-                    
+        case "tool":
+            GetDropdownData("/petTool").then(data => {
+                data.forEach(petTool => {
+                    dropdownContent += `<option value="${petTool["toolId"]}">${petTool["toolName"]}</option>`
                 });
                 AssignCreateProductContent(createForm, dropdownContent);
+            });
             break;
-            
+
     }
-    
+
 }
+
 function AssignCreateProductContent(createForm, dropdownContent) {
-    createForm.innerHTML = `<div class="flex flex-wrap space-x-4 items-center mt-2">
-    <label for="category" class="text-sm font-medium text-gray-900 dark:text-white">Sản phẩm</label>
-    <select id="category" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
+    addProductBlock = `<div class="flex flex-wrap space-x-4 items-center mt-2">
+    <label class="text-sm font-medium text-gray-900 dark:text-white">Sản phẩm</label>
+    <select onchange="RenderInputForm(this.value)" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
         <option selected>Chọn</option>
         ${dropdownContent}
     </select>
 
     <label for="quantity[]" class="text-sm font-medium text-gray-900 dark:text-white">Số lượng: </label>
-    <input type="number" name="quantity[]" id="quantity[]" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Số lượng" required="">
+    <input type="number" name="quantity[]" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Số lượng" required="">
 
-    <label for="priceImport" class="text-sm font-medium text-gray-900 dark:text-white">Giá nhập: </label>
-    <input type="number" name="priceImport[]" id="priceImport[]" onchange="CalulateTotalCost()" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Giá nhập" required="">
-</div>
-                    `;
+    <label for="cost[]" class="text-sm font-medium text-gray-900 dark:text-white">Giá nhập: </label>
+    <input type="number" name="cost[]" onchange="CalulateTotalCost()" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Giá nhập" required="">
+</div>`;
 }
-function AddNewProductSupply(event){
-    event.preventDefault();
+
+
+function RenderInputForm(value) {
+    var input = document.createElement('input');
+    input.setAttribute('type', 'text');
+    input.setAttribute('class', 'hidden');
+    input.setAttribute('value', value);
+    input.setAttribute('name', 'product[]');
+    document.getElementById('create-contract-form').appendChild(input);
+}
+
+function AddCreateProductInfoBlock(value) {
     const createForm = document.getElementById('productSupplies');
-    createForm.innerHTML += createForm.innerHTML;
+    createForm.innerHTML = "";
+    for (let i = 0; i < value; i++) {
+        createForm.innerHTML += addProductBlock;
+    }
 }
 
-function CalulateTotalCost(){
-      // Lấy tất cả các phần tử có id là 'priceImport[]'
-      const priceInputs = document.querySelectorAll('input[id="priceImport[]"]');
-      const quantityInputs = document.querySelectorAll('input[id="quantity[]"]');
-    
-      let total = 0;
-      
-      // Duyệt qua các phần tử và tính tổng
-      priceInputs.forEach(function(input, index) {
-          const value = parseFloat(input.value) || 0; // Chuyển đổi giá trị thành số (nếu không thì là 0)
-          total += value  * quantityInputs[index].value;
-      });
-  
-      // Hiển thị tổng giá trị
-      document.getElementById('totalCost').value = total;
-  }
+function CalulateTotalCost() {
+    // Lấy tất cả các phần tử có id là 'priceImport[]'
+    const priceInputs = document.querySelectorAll('input[name="cost[]"]');
+    const quantityInputs = document.querySelectorAll('input[name="quantity[]"]');
+
+    let total = 0;
+
+    // Duyệt qua các phần tử và tính tổng
+    priceInputs.forEach(function (input, index) {
+        const value = parseFloat(input.value) || 0; // Chuyển đổi giá trị thành số (nếu không thì là 0)
+        total += value * quantityInputs[index].value;
+    });
+
+    // Hiển thị tổng giá trị
+    document.getElementById('totalCost').value = total;
+}

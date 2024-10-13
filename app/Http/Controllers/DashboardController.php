@@ -18,11 +18,16 @@ class DashboardController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return mixed
      */
-    public function GetStaffTopKPIList($month){
+    public function GetPetTopKPIList($month){
         $year = date("Y");
-        $month = $month == '0' ? Carbon::now()->format('m') : $month;
+        $month = $month == null ? Carbon::now()->format('m') : $month;
         $dateCriteria = $year.'-'.$month.'.*';
-        return $this->neo4j->run($this->queryDatasource["Dashboard"]["GetStaffTopKPIList"], ['date' => $dateCriteria]);
+        $data = [];
+        foreach($this->neo4j->run($this->queryDatasource["Dashboard"]["GetPetTopKPIList"], ['date' => $dateCriteria]) as $record)
+        {
+            $data[$record->get('petName').'-'.$record->get('img')] = $record->get('totalValue');
+        }
+        return $data;
     }
     /**
      * Lấy doanh thu cửa hàng
@@ -37,21 +42,22 @@ class DashboardController extends Controller
         $expenseLabels = [];
         $revenue = [];
         $expense = [];
-        $revenueData = $this->neo4j->run($this->queryDatasource["Dashboard"]["GetRevenueByMonths"], ['date' => $dateCriteria]);
-        $expenseData = $this->neo4j->run($this->queryDatasource["Dashboard"]["GetExpenseByMonths"], ['date' => $dateCriteria]);
+        $revenueData = $this->neo4j->run($this->queryDatasource["Dashboard"]["GetRevenueByMonth"], ['date' => $dateCriteria])->first();
+        $expenseData = $this->neo4j->run($this->queryDatasource["Dashboard"]["GetExpenseByMonth"], ['date' => $dateCriteria])->first();
 
-        foreach( $revenueData as $r ){
-            array_push($revenueLabels, $r['date']);
-            $expense[$r['date']] =  $r['totalValue'];
+        // gán data: $data['date'=>'value']
+        for($count = 0; $count < sizeof($revenueData->get("date")->toArray()); $count++){
+            $revenue[$revenueData->get("date")->toArray()[$count]] =  $revenueData->get("totalValue")->toArray()[$count];
         }
 
-        foreach( $expenseData as $e ){
-            array_push($expenseLabels, $e['date']);
-            $expense[$e['date']] =  $e['totalValue'];
+        for($count = 0; $count < sizeof($expenseData->get("date")->toArray()); $count++){
+            $expense[$expenseData->get("date")->toArray()[$count]] =  $expenseData->get("totalValue")->toArray()[$count];
         }
 
+        // gộp thành label chung
         $labels = array_unique(array_merge($revenueLabels, $expenseLabels));
 
+        // xử lý data, date khong co => 0
         foreach($labels as $label)
         {
             if(!array_key_exists($label, $expense))
@@ -81,7 +87,7 @@ class DashboardController extends Controller
         $petToolRevenue = [];
         $petLabels = [];
         $petToolLabels = [];
-        $datas = $this->neo4j->run($this->queryDatasource["Dashboard"]["GetPPRevenueByMonths"], ['date' => $dateCriteria]);
+        $datas = $this->neo4j->run($this->queryDatasource["Dashboard"]["GetPPRevenueByMonth"], ['date' => $dateCriteria]);
         foreach($datas as $data)
         {
             if($data->get("productType") == "Pet")
@@ -116,9 +122,13 @@ class DashboardController extends Controller
      * Lấy tổng hợp doanh thu cửa hàng
      * @return Store|null
      */
-    public function GetStore(){
+    public function GetStore($month){
+        $year = date("Y");
+        $month = $month == '0' ? Carbon::now()->format('m') : $month;
+        $dateCriteria = $year.'-'.$month.'.*';
+
         $store = [["totalExpense" => 0, "totalRevenue" => 0]];
-        $neoResult = $this->neo4j->run($this->queryDatasource["Dashboard"]["GetStore"]);
+        $neoResult = $this->neo4j->run($this->queryDatasource["Dashboard"]["GetStore"], ["date" => $dateCriteria]);
         if ($neoResult->count() > 0) {
             // Lấy bản ghi đầu tiên
             $record = $neoResult->first();
@@ -130,7 +140,17 @@ class DashboardController extends Controller
     }
 
     /**
-     * Tổng thú cưng
+     * Lấy tổng doanh thu cửa hàng theo tháng
+     * @param mixed $month
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function GetTotalReAndExData($month){
+        $data = $this->GetStore($month);
+        return response()->json(["data" => $data], 200);
+    }
+
+    /**
+     * Tổng thú cưng: SL bán, còn
      * @return mixed
      */
     public function GetTotalPets(){
@@ -146,15 +166,11 @@ class DashboardController extends Controller
         // doanh thu cua hang
         $store = [];
         $petQuantity = [];
-        $staffTopKPIList = [];
-        foreach($this->GetStaffTopKPIList($request) as $staff){
-            $staffTopKPIList[$staff["staffName"]] = $staff["totalValue"];
-        }
-
-        $store = $this->GetStore();
+        $petTopKPIList = $this->GetPetTopKPIList(null);
+        $store = $this->GetStore(null);
         $petQuantity = $this->GetTotalPets()[0]->toArray();
         
-        return view('dashboard',compact("store", "petQuantity", "staffTopKPIList"));
+        return view('dashboard',compact("store", "petQuantity", "petTopKPIList"));
     }
     
     

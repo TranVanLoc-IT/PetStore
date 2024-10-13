@@ -8,17 +8,38 @@ use App\Models\Contract;
 use App\Models\Vendor;
 use Ramsey\Uuid\Type\Integer;
 use Str;
+use Log; // ghi log ở file storage/logs/laravel.log
 class ContractController extends Controller
 {
+
     /**
-     * Lay het hop dong
+     * Dùng để thay thế các tham số cho việc tạo quan hệ khi tạo contract
+     * @param mixed $query
+     * @param mixed $param
+     * @return array|string
+     */
+    private function GetCreateContractQueryString($query, $param){
+        return str_replace(array_keys($param),array_values($param), $query);
+    }
+
+    /**
+     * Lấy hết hợp đồng
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
      */
-    public function GetContract($from, $to){
+    public function GetContract($type){
+        $filter = [];
+        $query = $this->queryDatasource["Contract"]["GetContracts"];
+        if($type != "all"){
+            $query = $this->queryDatasource["Contract"]["GetContractWithFilter"];
+            $filter["criteria"] = false;
+            if($type == "confirmed"){
+                $filter["criteria"] = true;
+            }
+        }
         $contracts = [];
         $ownedBy = [];
         $contractVendors = [];
-        $records = $this->neo4j->run($this->queryDatasource["Contract"]["GetContracts"], ["skipValue" => (int)$from, "limitValue" => (int)$to]);
+        $records = $this->neo4j->run($query, $filter);
         foreach ($records as $record){
             $contract = new Contract($record->get("c")->toArray());
             array_push($contracts, $contract);
@@ -28,6 +49,10 @@ class ContractController extends Controller
         return view('contractView', ['contracts'=> $contracts, "ownedBy" => $ownedBy, "contractVendors" => $contractVendors]);
     }
 
+    /**
+     * Lấy danh sách các nhà cung cấp
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function GetVendors(){
         $vendors = [];
         $records = $this->neo4j->run($this->queryDatasource["Contract"]["GetVendors"]);
@@ -38,13 +63,18 @@ class ContractController extends Controller
         return back()->with("vendors",$vendors);
     }
 
+    /**
+     * Lấy thông tin danh sách các sản phẩm cho dữ liệu tạo sản phẩm cho contract
+     * @param mixed $table
+     * @return mixed
+     */
     public function GetDataSelectProductList($table){
         $data = [];
        switch($table){
         case "pet":
             $data = $this->neo4j->run("MATCH (n:Pet) 
-                                    WITH n.petName AS petName
-                                    RETURN petName
+                                    WITH n.petName AS petName, n.petId AS petId
+                                    RETURN petName, petId
                                     ")->toArray();
                                     break;
 
@@ -89,22 +119,68 @@ class ContractController extends Controller
      * @param \App\Models\Contract $contract
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function CreateContract(){
-        $data = json_decode(file_get_contents('php://input'), true);
-        $contractData = ['contractId' => (string)Str::uuid(),
-                        'title' => $data["title"], 
-                        'totalCost' => $data["totalCost"], 
-                        'signingDate' => $data["signingDate"]];
-                        // ['description'
-                        // 'sellerName', 
-                        // 'phone'];
-        
-        $products = [];
-        try{
-            $result = 1;
-            return response()->json('Success', "Tạo hợp đồng thành công"+$data("title"));
+    public function CreateContract(Request $request){
+        $query = $this->queryDatasource["Contract"]["CreateVendorContract"];
+        $dataFields = [
+            'contractId' => (string)Str::uuid(), 
+            'title' => $request->input("title"), 
+            'totalCost' => $request->input("totalCost"), 
+            'signingDate' => $request->input("signingDate"), 
+            'description' => $request->input("description") == null ? "" : $request->input("description"),
+            'vendorId' => (int)$request->input("vendorId"),
+            'image' => ''
+        ];
+        if($request->input("vendorType") == "customer")
+        {
+            $query = $this->queryDatasource["Contract"]["CreateCustomerContract"];
+            $dataFields['sellerName'] = $request->input("sellerName");
+            $dataFields['phone'] = $request->input("phone");
+        }
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = time() . '.' . $image->getClientOriginalExtension();
+            $dataFields["image"] = $image->storeAs('images', $imageName, 'public/img/contract'); // Lưu vào storage/app/public/images
+        }
+
+        $relationshipQuery = $this->GetCreateContractQueryString($this->queryDatasource["Contract"]["FindContractNode"], ['$contractId' => $dataFields["contractId"]]);
+        $size = count($request->input('product')); // Đếm số lượng sản phẩm
+        $param = [];
+        if($request->input('productType') == "pet")
+        {
+            for($i = 0; $i < $size; $i++){
+                $param['$totalCost'] = $request->input("cost")[$i] * $request->input('quantity')[$i];
+                $param['$totalAmount'] = $request->input("quantity")[$i];
+                $param['$id'] = $request->input("product")[$i];
+                $relationshipQuery .= $this->GetCreateContractQueryString($this->queryDatasource["Contract"]["CreateContractToPetRelationship"], $param);
+            }
+        }
+        else if($request->input('productType') == "tool")
+        {
+            for($i = 0; $i < $size; $i++){
+                
+                $param['$totalCost'] = $request->input("cost")[$i] * $request->input('quantity')[$i];
+                $param['$totalAmount'] = $request->input("quantity")[$i];
+                $param['$id'] = $request->input("product")[$i];
+                $relationshipQuery .= $this->GetCreateContractQueryString($this->queryDatasource["Contract"]["CreateContractPetToolRelationship"], $param);
+            }
+        }
+        else{
+            for($i = 0; $i < $size; $i++){
+               
+                $param['$totalCost'] = $request->input("cost")[$i] * $request->input('quantity')[$i];
+                $param['$totalAmount'] = $request->input("quantity")[$i];
+                $param['$id'] = $request->input("product")[$i];
+                $relationshipQuery .= $this->GetCreateContractQueryString($this->queryDatasource["Contract"]["CreateContractToFoodRelationship"], $param);
+
+            }
+        }
+        try {
+            $this->neo4j->run($query, $dataFields);
+            $this->neo4j->run($relationshipQuery);
+            return response()->json(['Inform' => "Thành công"],200);
+
         }catch(\Exception $e){
-            return response()->json('error', "Có lỗi");
+            return response()->json(['Inform' => "Có lỗi"], 404);
         }
     }
     
@@ -129,13 +205,14 @@ class ContractController extends Controller
      * @param mixed $contractId
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function ConfirmContract(Request $request){
+    public function UpdateContract(){
     $data = json_decode(file_get_contents('php://input'), true);
         try{
-            $result = $this->neo4j->run($this->queryDatasource->Contract->CreateContract,["id" => $data('contractId')]);
+            $result = $this->neo4j->run($this->queryDatasource["Contract"]["ConfirmContract"],["id" => $data['contractId']]);
             return response()->json(['Inform' => "Cập nhật hợp đồng thành công"], 200 );
         }catch(\Exception $e){
             return response()->json(['Inform' => "Cập nhật hợp đồng thất bại"], 500);
         }
     }
+
 }

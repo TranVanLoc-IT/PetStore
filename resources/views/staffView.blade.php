@@ -67,7 +67,7 @@
                         </svg>
                     </div>
                     <div class="mx-5">
-                        <h4 class="text-2xl font-semibold text-gray-700">{{sizeof($staffs)}}</h4>
+                        <h4 class="text-2xl font-semibold text-gray-700">{{ sizeof($staffs) }}</h4>
                         <div class="text-gray-500">Nhân viên hiện có</div>
                     </div>
                 </div>
@@ -107,28 +107,30 @@
                                 <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-200">
                                     <div class="flex items-center">
                                         <div class="ml-4">
-                                            <div class="text-sm font-medium leading-5 text-gray-900">{{$staff->name}}
+                                            <div class="text-sm font-medium leading-5 text-gray-900">
+                                                {{ $staff->name }}
                                             </div>
-                                            <div class="text-sm leading-5 text-gray-500">{{$staff->phone}}</div>
+                                            <div class="text-sm leading-5 text-gray-500">{{ $staff->phone }}</div>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-200">
-                                    <div class="text-sm leading-5 text-gray-900">{{$staff->staffId}}</div>
+                                    <div class="text-sm leading-5 text-gray-900">{{ $staff->staffId }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-200">
-                                    <div class="text-sm leading-5 text-gray-900">{{$staff->seniority}} - {{$staff->yearIn}}</div>
+                                    <div class="text-sm leading-5 text-gray-900">{{ $staff->seniority }} -
+                                        {{ $staff->yearIn }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-200">
                                     <span
-                                        class="inline-flex px-2 text-xs font-semibold leading-5 text-green-800 bg-green-100 rounded-full">{{$staff->status}}</span>
+                                        class="inline-flex px-2 text-xs font-semibold leading-5 text-green-800 bg-green-100 rounded-full">{{ $staff->status }}</span>
                                 </td>
                                 <td
                                     class="px-6 py-4 text-sm leading-5 text-gray-500 whitespace-no-wrap border-b border-gray-200">
-                                    {{$staff->totalWorkHours}}</td>
+                                    {{ $staff->totalWorkHours }}</td>
                                 <td
                                     class="px-6 py-4 text-sm leading-5 text-gray-500 whitespace-no-wrap border-b border-gray-200">
-                                    {{$paySalary->salary}}</td>
+                                    {{ $paySalary->salary }}</td>
                                 <td
                                     class="px-6 py-4 text-sm font-medium leading-5 text-right whitespace-no-wrap border-b border-gray-200">
                                     <a href="#" class="text-indigo-600 hover:text-indigo-900">Tính lương</a>
@@ -141,7 +143,7 @@
         </div>
     </div>
 </div>
-<script src="{{asset('public/js/staffScript.js')}}">
+<script src="{{ asset('public/js/staffScript.js') }}">
 
 </script>
 @endsection

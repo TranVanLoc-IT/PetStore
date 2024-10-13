@@ -11,6 +11,9 @@ use App\Models\RChargeOf; // role
 use App\Models\RPaySalary;// removed
 use App\Models\Staff;
 use Carbon\Carbon;
+use DateTime;
+use Log;
+use Str;
 
 class PorfolioController extends Controller
 {
@@ -25,17 +28,30 @@ class PorfolioController extends Controller
         $month = $month == '0' ? Carbon::now()->format('m') : $month;
         $dateCriteria = $year.'-'.$month.'.*';
         // san pham + hoa don di kem
-        $product = [];
+        $products = [];
         $invoices = [];
+        $totalRevenue= [];
+        $totalSold = [];
         $data = $this->neo4j->run($this->queryDatasource["Product"]["GetProducts"],['date' => $dateCriteria]);
         foreach($data as $d)
         {
-            $pet = new Pet($d->get("p")->values());
-            $products[] = $pet;
+            $products[] = $d->get("p")->getProperties()->toArray();
             $invoices[] = $d->get("invoiceList");
+            $totalSold[] = $d->get("totalQuantitySold");
+            $totalRevenue[] = $d->get("totalRevenue");
         }
         
-        return view('petView',compact('products', 'invoices'));
+        return response()->json(["products" => $products, "totalRevenue" => $totalRevenue, "totalSold" => $totalSold, "invoice" => $invoices], 200);
+    }
+    /**
+     * Cập nhật giá bán
+     * @return void
+     */
+    public function UpdateProductPrice(){
+        $data = json_decode(file_get_contents('php://input'), true);
+        $query = $this->queryDatasource["Product"]["UpdateProductPrice"];
+        $this->neo4j->run($query, ["id" => $data["productId"], "newPrice" => $data["newPrice"]]);
+        return response()->json(["Inform" => "Sửa giá thành công"], 200);
     }
     /**
      * Nhan vien , thong tin gio lam, vi tri, ket qua lam viec(so hoa don). Xep hang nhan vien, luong chi tra, tong luong chi tra
@@ -46,17 +62,49 @@ class PorfolioController extends Controller
         $month = $month == '0' ? Carbon::now()->format('m') : $month;
         $dateCriteria = $year.'-'.$month.'.*';
 
+        // st, roles, shiftworks, paid
         $staffs = [];
-        $paysalary = [];
+        $role = [];
+        $paylary = [];
         $shiftWork = []; // chargeof
-        $data = $this->neo4j->run($this->queryDatasource["Service"]["GetStaffShiftWorkData"], ['date'=> $dateCriteria]);
+        $paid = [];
+        $data = $this->neo4j->run($this->queryDatasource["Staff"]["GetStaffsWorking"], ['date'=> $dateCriteria]);
         foreach($data as $d)
         {
-            $staff = new Staff($d->get("s")->values());
+            $staff = new Staff($d->get("st")->getProperties()->toArray());
             $staffs[] = $staff;
-            $shifts[$staff->id] = $d->get("shiftList");
-            $paySalary[$staff->id] = $d->get("salary");
+            $paid[] = $d->get("paid");
+            $shiftWork[] = $d->get("shiftworks")->toArray();
+            $role[] = $d->get("role");
+            $salary[] = $d->get("salary");
         }
-        return view('staffView', compact('staffs', 'shiftWork'));
+        return response()->json(["staffs" => $staffs, "role"=>$role, "shiftWorks" => $shiftWork, "paid" => $paid, 'salary' => $salary], 200);
+    }
+
+    /**
+     * Trả lương nhân viên
+     * @param mixed $month
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function PaySalary($month){
+        $data = json_decode(file_get_contents('php://input'), true);
+        $year = date("Y");
+        $month = $month == '0' ? Carbon::now()->format('m') : $month;
+        $date = $this->GetLastDayOfMonth( $year, $month);
+        $autoId =  (string)Str::uuid();
+        $pay = [
+            "id" => $autoId,
+            "money" => $data["money"],
+            "date" => $date,
+            "staffId" => $data["staffId"]
+        ];
+        Log::info("info", $pay);
+        $this->neo4j->run($this->queryDatasource["Staff"]["PaySalary"], $pay);
+        return response()->json(["Inform" => $autoId], 200);
+    }
+    function GetLastDayOfMonth($year, $month) {
+        $date = new DateTime("$year-$month-01");
+        $date->modify('last day of this month');
+        return $date->format('Y-m-d');
     }
 }
