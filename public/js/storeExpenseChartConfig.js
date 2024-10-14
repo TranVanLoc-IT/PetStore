@@ -13,9 +13,9 @@ async function GetExpenseData(url) {
 function LoadTotalReAndExData() {
     GetExpenseData("/store/totalReAndExData/" + document.getElementById("storeDataOptions").value)
         .then(res => {
-            document.querySelector(".totalRevenue").textContent = res.data.totalRevenue;
-            document.querySelector(".totalExpense").textContent = res.data.totalExpense;
-            document.querySelector(".totalProfit").textContent = Number(res.data.totalRevenue) - Number(res.data.totalExpense);
+            document.querySelector(".totalRevenue").textContent = Math.floor(res.data.totalRevenue);
+            document.querySelector(".totalExpense").textContent = Math.floor(res.data.totalExpense);
+            document.querySelector(".totalProfit").textContent = Math.floor(Number(res.data.totalRevenue) - Number(res.data.totalExpense));
         })
         .catch(error => {
             alert(error.message)

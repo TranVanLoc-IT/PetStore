@@ -167,7 +167,7 @@ class DashboardController extends Controller
         $store = [];
         $petQuantity = [];
         $petTopKPIList = $this->GetPetTopKPIList(null);
-        $store = $this->GetStore(null);
+        $store = $this->GetStore('0');
         $petQuantity = $this->GetTotalPets()[0]->toArray();
         
         return view('dashboard',compact("store", "petQuantity", "petTopKPIList"));

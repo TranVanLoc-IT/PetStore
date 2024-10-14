@@ -56,8 +56,9 @@
                                 <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                                     <ol type="1">
                                         <blade
-                                            for|(%24count%20%3D%200%3B%20%24count%20%3C%20sizeof(%24productApplies%5B%24promotion-%3EpromotionId%5D)%3B%20%24count%2B%2B)>
-                                            <li>{{ $productApplies[$promotion->promotionId][$count]." " }}
+                                        @for($count = 0; $count < count($productApplies[$promotion->promotionId]); $count++)>
+                                            <li>
+                                                {{ $productApplies[$promotion->promotionId][$count]." " }}
                                             </li>
                                         @endfor
                                     </ol>

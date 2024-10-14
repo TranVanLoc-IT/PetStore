@@ -143,7 +143,7 @@ class ContractController extends Controller
         }
 
         $relationshipQuery = $this->GetCreateContractQueryString($this->queryDatasource["Contract"]["FindContractNode"], ['$contractId' => $dataFields["contractId"]]);
-        $size = count($request->input('product')); // Đếm số lượng sản phẩm
+        $size = $request->input('productQuantity'); // Đếm số lượng sản phẩm
         $param = [];
         if($request->input('productType') == "pet")
         {
@@ -161,7 +161,7 @@ class ContractController extends Controller
                 $param['$totalCost'] = $request->input("cost")[$i] * $request->input('quantity')[$i];
                 $param['$totalAmount'] = $request->input("quantity")[$i];
                 $param['$id'] = $request->input("product")[$i];
-                $relationshipQuery .= $this->GetCreateContractQueryString($this->queryDatasource["Contract"]["CreateContractPetToolRelationship"], $param);
+                $relationshipQuery .= $this->GetCreateContractQueryString($this->queryDatasource["Contract"]["CreateContractToPetToolRelationship"], $param);
             }
         }
         else{
@@ -175,6 +175,8 @@ class ContractController extends Controller
             }
         }
         try {
+            Log::info("con", $dataFields);
+            Log::info("cn", [$relationshipQuery]);
             $this->neo4j->run($query, $dataFields);
             $this->neo4j->run($relationshipQuery);
             return response()->json(['Inform' => "Thành công"],200);

@@ -6,11 +6,7 @@
     $totalSize = sizeof($contracts);
 @endphp
 <script>
-    const TOTAL_SIZE = {
-        {
-            % 24 totalSize
-        }
-    };
+    const TOTAL_SIZE = {{$totalSize}};
     const DATA = @json($contracts);
     const DATA_VENDOR = @json($contractVendors);
     const DATA_OWNEDBY = @json($ownedBy);
@@ -27,6 +23,8 @@
                         <span class="text-gray-500">Hợp đồng đang có: </span>
                         <span class="dark:text-white"><?php echo $totalSize;?></span>
                     </h5>
+                    <h5 class="text-gray-500 dark:text-gray-400 ml-1 ml-5 pag-des"></h5>
+
                 </div>
             </div>
             <div
@@ -103,14 +101,13 @@
                     </li>
                     <li>
                         <a onclick="Pagination(this,1)"
-                            class="flex items-center bg-green-500 opacity-50 justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">1</a>
+                            class="first-pag flex items-center bg-green-500 opacity-50 justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">1</a>
                     </li>
 
-                    <h5 class="text-gray-500 dark:text-gray-400 ml-1 ml-5 pag-des"></h5>
                 </ul>
                 <ul class="no-pag hidden inline-flex items-stretch -space-x-px">
                     <li>
-                        <a disabled href="#"
+                        <button disabled href="#"
                             class="flex items-center justify-center h-full py-1.5 px-3 ml-0 text-gray-500 bg-white rounded-l-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
                             <span class="sr-only">Trước</span>
                             <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewbox="0 0 20 20"
@@ -119,10 +116,10 @@
                                     d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
                                     clip-rule="evenodd" />
                             </svg>
-                        </a>
+                        </button>
                     </li>
                     <li>
-                        <a disabled href="#"
+                        <button disabled href="#"
                             class="flex items-center justify-center h-full py-1.5 px-3 leading-tight text-gray-500 bg-white rounded-r-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
                             <span class="sr-only">Tiếp</span>
                             <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewbox="0 0 20 20"
@@ -131,7 +128,7 @@
                                     d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
                                     clip-rule="evenodd" />
                             </svg>
-                        </a>
+                        </button>
                     </li>
                     <h5 class="text-gray-500 dark:text-gray-400 ml-1 ml-5 pag-des"></h5>
 
@@ -221,9 +218,9 @@
                     <div>
                         <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Số lượng mặt hàng:
                         </label>
-                        <input onchange="AddCreateProductInfoBlock(this.value)"
+                        <input name="productQuantity" onchange="AddCreateProductInfoBlock(this.value)"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            placeholder="> 1" required="">
+                            placeholder=">= 1" required="">
                     </div>
                     <div class="d-flex">
                         <label for="productSupplies"

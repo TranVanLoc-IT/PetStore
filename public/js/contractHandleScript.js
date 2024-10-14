@@ -1,7 +1,10 @@
 let addProductBlock = "";
 const PAGE_SIZE = 5;
 let currentPage = 1;
-let currentPageElement = null;
+let currentPageElement = document.querySelector(".first-pag");
+
+let to = PAGE_SIZE;
+let from = currentPage * PAGE_SIZE;
 async function ViewDetail(contractId) {
     try {
         const response = await fetch('/hop-dong/chi-tiet/' + contractId);
@@ -141,7 +144,6 @@ document.getElementById('create-contract-form').addEventListener('submit', funct
             return response.json();
         })
         .then(response => {
-            this.reset();
             SAlertMessage.innerText = response.Inform;
             SAlertBlock.classList.remove('hidden');
 
@@ -160,6 +162,8 @@ document.getElementById('create-contract-form').addEventListener('submit', funct
                 EAlertBlock.classList.add('hidden');
             }, 2000);
         });
+    this.reset();
+
 });
 
 
@@ -170,18 +174,18 @@ function InitPagination() {
     } else {
         let hPag = document.querySelector('.have-pag')
         hPag.classList.remove('hidden');
-        for (let i = 2; i < (TOTAL_SIZE / PAGE_SIZE) - 1; i++) {
+        for (let i = 2; i < (TOTAL_SIZE / PAGE_SIZE) + 1; i++) {
             hPag.innerHTML += `<li>
-                                <a onclick="Pagination(this,$count)" class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">${i}</a>
+                                <a onclick="Pagination(this,${i})" class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">${i}</a>
                             </li>`;
         }
         hPag.innerHTML += ` <li>
-                                <a id="next" onclick="Pagination(this,'next')" class="flex items-center justify-center h-full py-1.5 px-3 leading-tight text-gray-500 bg-white rounded-r-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
+                                <button id="next" onclick="Pagination(this,'next')" class="flex items-center justify-center h-full py-1.5 px-3 leading-tight text-gray-500 bg-white rounded-r-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
                                     <span class="sr-only">Tiếp</span>
                                     <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                                         <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
                                     </svg>
-                                </a>
+                                </button>
                             </li>`;
         document.querySelectorAll('.pag-des')[0].innerText = `${((PAGE_SIZE * currentPage) - PAGE_SIZE) + 1} - ${PAGE_SIZE * currentPage} trong ${TOTAL_SIZE} kết quả`;
     }
@@ -189,26 +193,46 @@ function InitPagination() {
 InitPagination();
 
 function Pagination(e, index) {
+    to = PAGE_SIZE;
+    let pageLeft = TOTAL_SIZE % PAGE_SIZE;
+    // ktra truoc, sau
     if (isNaN(index)) {
         if (index == "previous") {
             currentPage--;
             if (currentPage == 0)
-                document.getElementById('previous').disabled = true;
+                document.getElementById('previous').disabled = true; // vo hieu hoa neu het trang
+            if(currentPage < 0)
+                return;
         } else {
             currentPage++;
-            if (currentPage >= ((TOTAL_SIZE / PAGE_SIZE)))
+            if (currentPage > (TOTAL_SIZE / PAGE_SIZE))
+            {
+                to = pageLeft;                
                 document.getElementById('next').disabled = true;
-
+            }
+        }
+    }else{
+        currentPage = index;
+        if (currentPage > (TOTAL_SIZE / PAGE_SIZE))
+        {
+            to = pageLeft; // lay cac trang du con lai
+            document.getElementById('next').disabled = true;
+        }
+        if(currentPage == 1)
+        {
+            document.getElementById('previous').disabled = true; // vo hieu hoa neu het trang
         }
     }
+    from = (currentPage * PAGE_SIZE) - PAGE_SIZE + 1;
+    if(currentPage > (TOTAL_SIZE / PAGE_SIZE) && (TOTAL_SIZE % PAGE_SIZE) == 0) return;
     let dataTable = document.getElementById('contract-table-body');
     dataTable.innerHTML = "";
     if (e != null) {
-        e.classList.add('bg-green-300', 'opacity-50');
+        currentPageElement.classList.remove('bg-green-300', 'opacity-50');
         currentPageElement = e;
+        currentPageElement.classList.add('bg-green-300', 'opacity-50');
     }
-    dataTable.innerHTML = "";
-    for (let count = index; count < PAGE_SIZE * index; count++) {
+    for (let count = (currentPage - 1) * PAGE_SIZE; count < (to == pageLeft ? to + PAGE_SIZE : PAGE_SIZE * currentPage); count++) {
         let tr = document.createElement('tr');
         tr.id = `row-${DATA[count].contractId}`;
         tr.className = 'border-b dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700';
@@ -267,6 +291,8 @@ function Pagination(e, index) {
                             </td>`;
         dataTable.appendChild(tr);
     }
+    document.querySelectorAll('.pag-des')[0].innerText = `${from} - ${to == pageLeft ? TOTAL_SIZE : to} trong ${TOTAL_SIZE} kết quả`;
+
 }
 Pagination(null, 1);
 
