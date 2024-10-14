@@ -47,8 +47,13 @@
                                 </th>
                                 <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                                     <div class="flex items-center">
-                                        <div class="h-4 w-4 rounded-full inline-block mr-2 bg-orange-500"></div>
-                                        {{ $promotion->title }}
+                                        @if($activeOn[$promotion->promotionId]->dateEnd < date('Y-m-d'))
+                                            <div class="h-4 w-4 rounded-full inline-block mr-2 bg-red-500"></div>
+                                            {{ $promotion->title }}
+                                        @else
+                                            <div class="h-4 w-4 rounded-full inline-block mr-2 bg-green-500"></div>
+                                            {{ $promotion->title }}
+                                        @endif
                                     </div>
                                 </td>
                                 <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">

@@ -128,6 +128,7 @@ class ContractController extends Controller
             'signingDate' => $request->input("signingDate"), 
             'description' => $request->input("description") == null ? "" : $request->input("description"),
             'vendorId' => (int)$request->input("vendorId"),
+            'totalQuantity' => $request->input("productQuantity"),
             'image' => ''
         ];
         if($request->input("vendorType") == "customer")
@@ -142,16 +143,21 @@ class ContractController extends Controller
             $dataFields["image"] = $image->storeAs('images', $imageName, 'public/img/contract'); // Lưu vào storage/app/public/images
         }
 
-        $relationshipQuery = $this->GetCreateContractQueryString($this->queryDatasource["Contract"]["FindContractNode"], ['$contractId' => $dataFields["contractId"]]);
+        $contractQuery = $this->GetCreateContractQueryString($this->queryDatasource["Contract"]["FindContractNode"], ['$contractId' => $dataFields["contractId"]]);
         $size = $request->input('productQuantity'); // Đếm số lượng sản phẩm
         $param = [];
+        try {
+            $this->neo4j->run($query, $dataFields);
+
         if($request->input('productType') == "pet")
         {
             for($i = 0; $i < $size; $i++){
                 $param['$totalCost'] = $request->input("cost")[$i] * $request->input('quantity')[$i];
                 $param['$totalAmount'] = $request->input("quantity")[$i];
                 $param['$id'] = $request->input("product")[$i];
+                $relationshipQuery = $contractQuery;
                 $relationshipQuery .= $this->GetCreateContractQueryString($this->queryDatasource["Contract"]["CreateContractToPetRelationship"], $param);
+                $this->neo4j->run($relationshipQuery);
             }
         }
         else if($request->input('productType') == "tool")
@@ -161,7 +167,9 @@ class ContractController extends Controller
                 $param['$totalCost'] = $request->input("cost")[$i] * $request->input('quantity')[$i];
                 $param['$totalAmount'] = $request->input("quantity")[$i];
                 $param['$id'] = $request->input("product")[$i];
+                $relationshipQuery = $contractQuery;
                 $relationshipQuery .= $this->GetCreateContractQueryString($this->queryDatasource["Contract"]["CreateContractToPetToolRelationship"], $param);
+                $this->neo4j->run($relationshipQuery);
             }
         }
         else{
@@ -170,16 +178,13 @@ class ContractController extends Controller
                 $param['$totalCost'] = $request->input("cost")[$i] * $request->input('quantity')[$i];
                 $param['$totalAmount'] = $request->input("quantity")[$i];
                 $param['$id'] = $request->input("product")[$i];
+                $relationshipQuery = $contractQuery;
                 $relationshipQuery .= $this->GetCreateContractQueryString($this->queryDatasource["Contract"]["CreateContractToFoodRelationship"], $param);
+                $this->neo4j->run($relationshipQuery);
 
             }
         }
-        try {
-            Log::info("con", $dataFields);
-            Log::info("cn", [$relationshipQuery]);
-            $this->neo4j->run($query, $dataFields);
-            $this->neo4j->run($relationshipQuery);
-            return response()->json(['Inform' => "Thành công"],200);
+            return response()->json(['Inform' => $dataFields["contractId"]],200);
 
         }catch(\Exception $e){
             return response()->json(['Inform' => "Có lỗi"], 404);

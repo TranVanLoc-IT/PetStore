@@ -123,7 +123,7 @@ Contract:
     RETURN COUNT(c) AS total;
   GetDetailContract: |
    MATCH (i:Pet|PetTool|Food)<-[p:PROVIDES]-(:Contract {contractId: $id}) 
-    WITH p.totalAmount AS totalAmount, p.totalPrice AS totalPrice,
+    WITH p.amount AS totalAmount, p.priceImport AS totalPrice,
       CASE 
         WHEN i:Pet THEN i.petName
         WHEN i:PetTool THEN i.toolName
@@ -138,11 +138,14 @@ Contract:
   FindContractNode: |
     MATCH(c:Contract{contractId: '$contractId'})
   CreateContractToPetRelationship: |
-    CREATE (c)-[:PROVIDES{amount:$totalAmount, priceImport:$totalCost}]->(:Pet{petId: '$id'})
+    MATCH(p:Pet{petId: '$id'})
+    CREATE (c)-[:PROVIDES{amount:$totalAmount, priceImport:$totalCost}]->(p);
   CreateContractToPetToolRelationship: |
-    CREATE (c)-[:PROVIDES{amount:$totalAmount, priceImport:$totalCost}]->(:PetTool{toolId: '$id'})
+    MATCH(p:PetTool{toolId: '$id'})
+    CREATE (c)-[:PROVIDES{amount:$totalAmount, priceImport:$totalCost}]->(p);
   CreateContractToFoodRelationship: |
-    CREATE (c)-[:PROVIDES{amount:$totalAmount, priceImport:$totalCost}]->(:Food{foodId: '$id'})
+    MATCH(p:Food{foodId: '$id'})
+    CREATE (c)-[:PROVIDES{amount:$totalAmount, priceImport:$totalCost}]->(p);
 
   CreateCustomerContract: |
     CREATE (:Contract {contractId: $contractId, 
@@ -151,6 +154,7 @@ Contract:
                        signingDate: $signingDate, 
                        sellerName: $sellerName,
                        phone: $phone,
+                       totalQuantity: $totalQuantity,
                        description: $description,
                        image: $image})
   CreateVendorContract: |
@@ -158,6 +162,7 @@ Contract:
     CREATE (:Contract {contractId: $contractId, 
                        title: replace(trim($title), "  ", " "),
                        totalCost: $totalCost, 
+                       totalQuantity: $totalQuantity,
                        signingDate: $signingDate,
                        description: $description,
                        image: $image})-[:OWNED_BY{confirmStatus: false}]->(v)

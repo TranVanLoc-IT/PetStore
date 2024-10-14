@@ -88,7 +88,7 @@
                         d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
                         clip-rule="evenodd" />
                 </svg>
-                <input type="text" role="search" placeholder="Search..."
+                <input type="text" id="search-bar" role="search" placeholder="Search..."
                     class="py-2 pl-10 pr-4 w-full border-4 border-transparent placeholder-gray-400 focus:bg-gray-50 rounded-lg" />
             </div>
             <div class="flex flex-shrink-0 items-center ml-auto">

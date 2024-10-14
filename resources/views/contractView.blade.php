@@ -6,8 +6,8 @@
     $totalSize = sizeof($contracts);
 @endphp
 <script>
-    const TOTAL_SIZE = {{$totalSize}};
-    const DATA = @json($contracts);
+    var totalSize = {{$totalSize}};
+    var data = @json($contracts);
     const DATA_VENDOR = @json($contractVendors);
     const DATA_OWNEDBY = @json($ownedBy);
 
