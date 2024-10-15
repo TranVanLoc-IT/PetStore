@@ -139,37 +139,77 @@ Contract:
     MATCH(c:Contract{contractId: '$contractId'})
   CreateContractToPetRelationship: |
     MATCH(p:Pet{petId: '$id'})
-    CREATE (c)-[:PROVIDES{amount:$totalAmount, priceImport:$totalCost}]->(p);
+    MERGE (c)-[r:PROVIDES{amount:$totalAmount, priceImport:$totalCost}]->(p)
+    ON CREATE SET r.amount = $totalAmount, r.priceImport = $totalCost
+    ON MATCH SET r.amount = $totalAmount, r.priceImport = $totalCost;
   CreateContractToPetToolRelationship: |
     MATCH(p:PetTool{toolId: '$id'})
-    CREATE (c)-[:PROVIDES{amount:$totalAmount, priceImport:$totalCost}]->(p);
+    MERGE (c)-[r:PROVIDES]->(p)
+    ON CREATE SET r.amount = $totalAmount, r.priceImport = $totalCost
+    ON MATCH SET r.amount = $totalAmount, r.priceImport = $totalCost;
   CreateContractToFoodRelationship: |
     MATCH(p:Food{foodId: '$id'})
-    CREATE (c)-[:PROVIDES{amount:$totalAmount, priceImport:$totalCost}]->(p);
+    MERGE (c)-[r:PROVIDES]->(p)
+    ON CREATE SET r.amount = $totalAmount, r.priceImport = $totalCost
+    ON MATCH SET r.amount = $totalAmount, r.priceImport = $totalCost;
 
   CreateCustomerContract: |
-    CREATE (:Contract {contractId: $contractId, 
-                       title: replace(trim($title), "  ", " "),
-                       totalCost: $totalCost, 
-                       signingDate: $signingDate, 
-                       sellerName: $sellerName,
-                       phone: $phone,
-                       totalQuantity: $totalQuantity,
-                       description: $description,
-                       image: $image})
+    MERGE (c:Contract {contractId: $contractId})
+    ON CREATE SET c.title = replace(trim($title), "  ", " "),
+                  c.totalCost = $totalCost,
+                  c.signingDate = $signingDate,
+                  c.sellerName = $sellerName,
+                  c.phone = $phone,
+                  c.totalQuantity = $totalQuantity,
+                  c.description = $description,
+                  c.image = $image
+    ON MATCH SET c.title = replace(trim($title), "  ", " "),
+                  c.totalCost = $totalCost,
+                  c.signingDate = $signingDate,
+                  c.sellerName = $sellerName,
+                  c.phone = $phone,
+                  c.totalQuantity = $totalQuantity,
+                  c.description = $description,
+                  c.image = $image;
+
   CreateVendorContract: |
-    MATCH (v:Vendor{vendorId: $vendorId}) 
-    CREATE (:Contract {contractId: $contractId, 
-                       title: replace(trim($title), "  ", " "),
-                       totalCost: $totalCost, 
-                       totalQuantity: $totalQuantity,
-                       signingDate: $signingDate,
-                       description: $description,
-                       image: $image})-[:OWNED_BY{confirmStatus: false}]->(v)
+    MATCH (v:Vendor {vendorId: $vendorId})
+    MERGE (c:Contract {contractId: $contractId})
+    ON CREATE SET c.title = replace(trim($title), "  ", " "),
+                  c.totalCost = $totalCost,
+                  c.totalQuantity = $totalQuantity,
+                  c.signingDate = $signingDate,
+                  c.description = $description,
+                  c.image = $image
+    ON MATCH SET c.title = replace(trim($title), "  ", " "),
+                  c.totalCost = $totalCost,
+                  c.totalQuantity = $totalQuantity,
+                  c.signingDate = $signingDate,
+                  c.description = $description,
+                  c.image = $image
+    MERGE (c)-[r:OWNED_BY]->(v)
+    ON CREATE SET r.confirmStatus = false;
+
   ConfirmContract: |
     MATCH (c:Contract {contractId: $id})-[r:OWNED_BY]->(), (s:Store)
+    OPTIONAL MATCH (c)-[pr:PROVIDES]->(p:Pet)
+    OPTIONAL MATCH (c)-[prt:PROVIDES]->(pt:PetTool)
+    OPTIONAL MATCH (c)-[prf:PROVIDES]->(f:Food)
+    // Update store's expense based on contract total cost
     SET s.expense = s.expense + c.totalCost
     SET r.confirmStatus = true
+    WITH pr, prt, prf, p, pt, f
+    FOREACH (_ IN CASE WHEN pr IS NOT NULL THEN [1] ELSE [] END |
+        SET p.availableQuantity = p.availableQuantity + pr.amount
+    )
+    FOREACH (_ IN CASE WHEN prt IS NOT NULL THEN [1] ELSE [] END |
+        SET pt.availableQuantity = pt.availableQuantity + prt.amount
+    )
+    FOREACH (_ IN CASE WHEN prf IS NOT NULL THEN [1] ELSE [] END |
+        SET f.availableQuantity = f.availableQuantity + prf.amount
+    )
+    RETURN c, s, p, pt, f;
+
   DeleteContract: |
     MATCH (c:Contract {contractId: $id}) 
     DETACH DELETE c
