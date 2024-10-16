@@ -9,7 +9,6 @@
     var totalSize = {{$totalSize}};
     var data = @json($contracts);
     const DATA_VENDOR = @json($contractVendors);
-    const DATA_OWNEDBY = @json($ownedBy);
 
 </script>
 
@@ -294,7 +293,7 @@
             <!-- Modal header -->
             <div class="flex justify-between items-center pb-4 mb-4 rounded-t border-b sm:mb-5 dark:border-gray-600">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Chi tiết hợp đồng</h3>
-                <button type="button"
+                <button type="button" id="btn-show"
                     class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white"
                     data-modal-toggle="viewContractModel">
                     <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewbox="0 0 20 20"

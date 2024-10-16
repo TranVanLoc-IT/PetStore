@@ -147,9 +147,8 @@
                             </select>
                         </div>
                         <div>
-                            <label for="value" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Điều
-                                kiện áp dụng: </label>
-                            <input type="text" name="value" id="value"
+                            <label for="value" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Giá trị: </label>
+                            <input type="number" name="value" id="value"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                                 placeholder="Điều kiện" required="">
                         </div>
@@ -171,8 +170,6 @@
                             <div id="productActiveOn" class="flex-1 float-start">
 
                             </div>
-                            <button class="flex-1 float-end" onclick="AddNewProductSupply(event)"><i
-                                    class="fas fa-plus text-sm p-2 rounded bg-green-500"></i></button>
                         </div>
                         <div class="sm:col-span-2"><label for="description"
                                 class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Mô tả</label>

@@ -24,6 +24,7 @@ class PorfolioController extends Controller
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
      */
     public function GetProductData($month){
+        // Thiết lập điều kiện tháng năm nếu tháng không chọn thì mặc định là tháng hiện tại
         $year = date("Y");
         $month = $month == '0' ? Carbon::now()->format('m') : $month;
         $dateCriteria = $year.'-'.$month.'.*';
@@ -48,9 +49,13 @@ class PorfolioController extends Controller
      * @return void
      */
     public function UpdateProductPrice(){
+        // Lấy dữ liệu submit
         $data = json_decode(file_get_contents('php://input'), true);
         $query = $this->queryDatasource["Product"]["UpdateProductPrice"];
+
+        // Truyền tham số dữ liệu cho chuỗi query
         $this->neo4j->run($query, ["id" => $data["productId"], "newPrice" => $data["newPrice"]]);
+
         return response()->json(["Inform" => "Sửa giá thành công"], 200);
     }
     /**
@@ -98,7 +103,6 @@ class PorfolioController extends Controller
             "date" => $date,
             "staffId" => $data["staffId"]
         ];
-        Log::info("info", $pay);
         $this->neo4j->run($this->queryDatasource["Staff"]["PaySalary"], $pay);
         return response()->json(["Inform" => $autoId], 200);
     }

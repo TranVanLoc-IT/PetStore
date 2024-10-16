@@ -24,6 +24,18 @@
                     "text-purple-600", "bg-white");
             }
 
+            function DetectUnit(value){
+                if(value >= 1000000000){
+                    return (value + " Tỉ VND").toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                }
+                else if(value >= 1000000){
+                    return (value + " Triệu VND").toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                } 
+                else if(value >= 1000){
+                    return (value + " Nghìn VND").toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                }
+                return '0 VND';
+            }
         </script>
 </head>
 

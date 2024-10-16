@@ -1,9 +1,12 @@
 @extends("layouts.app")
 @section("title", "Sản phẩm")
 @php
+    // Cấu hình Id và hàm cho các thẻ để tải dữ liệu khi chọn thời gian
+    // Không dùng giá trị trả thẳng vào mà dùng CONSTANT vì component laravel không chấp nhận
     const SP_RE_OPT = "portfolioOptions";
     const SP_RE_FUNC = "LoadTableData()";
     $months =[];
+    // Tạo nút thả chọn thời gian theo tháng
     foreach([1,2,3,4,5,6,7,8,9,10,11,12] as $m)
     {
     if($m < 10 & $m> 0)
@@ -15,7 +18,7 @@
         }
         }
 @endphp
-@section('content')<!-- Start block -->
+@section('content')<!-- Chọn bảng và mốc thời gian xem--->
 <section class="bg-gray-50 dark:bg-gray-900 p-3 sm:p-5 antialiased">
     <div class="mx-auto max-w-screen-2xl px-4 lg:px-12">
         <div class="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-lg overflow-hidden">
@@ -27,11 +30,13 @@
                         <select id="tableOption"
                             class="border p-2 border-blue-500 rounded-md hover:border-blue-700 focus:ring focus:ring-blue-300 focus:outline-none w-64"
                             onchange="LoadTableData()">
+                            <option selected value="select">Chọn</option>
                             <option value="/san-pham">Sản phẩm</option>
                             <option value="/nhan-vien">Nhân viên</option>
                         </select>
                         <x-dropdown-button :optionCollection="$months" :componentId="SP_RE_OPT"
                             :changeFunction="SP_RE_FUNC" />
+                            <div class="general-block"></div>
                     </div>
                 </div>
             </div>

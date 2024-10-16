@@ -10,12 +10,13 @@ async function GetExpenseData(url) {
     }
 }
 
+
 function LoadTotalReAndExData() {
     GetExpenseData("/store/totalReAndExData/" + document.getElementById("storeDataOptions").value)
         .then(res => {
-            document.querySelector(".totalRevenue").textContent = Math.floor(res.data.totalRevenue);
-            document.querySelector(".totalExpense").textContent = Math.floor(res.data.totalExpense);
-            document.querySelector(".totalProfit").textContent = Math.floor(Number(res.data.totalRevenue) - Number(res.data.totalExpense));
+            document.querySelector(".totalRevenue").textContent = DetectUnit(Math.floor(res.data.totalRevenue));
+            document.querySelector(".totalExpense").textContent = DetectUnit(Math.floor(res.data.totalExpense));
+            document.querySelector(".totalProfit").textContent = DetectUnit(Math.floor(Number(res.data.totalRevenue) - Number(res.data.totalExpense)));
         })
         .catch(error => {
             alert(error.message)
@@ -32,13 +33,13 @@ function CallGetExpenseData() {
             labels: res.labels,
             datasets: [{
                     label: 'Thu nhập',
-                    data: res.expense,
+                    data: res.revenue,
                     borderColor: '#FF0000',
                     backgroundColor: 'rgba(255, 0, 0, 0.5)',
                 },
                 {
                     label: 'Chi tiêu',
-                    data: res.revenue,
+                    data: res.expense,
                     borderColor: '#0000FF',
                     backgroundColor: 'rgba(0, 0, 255, 0.5)',
                 }

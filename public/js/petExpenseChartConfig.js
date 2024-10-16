@@ -17,44 +17,35 @@ function CallGetRevenueData() {
         petRevenueChart.destroy();
     }
     GetRevenueData().then(res => {
+        const total = res.Pet + res.PetTool + res.Food;
+        const petPercentage = res.Pet == 0 ? 0 : ((res.Pet / total) * 100).toFixed(2);
+        const petToolPercentage =  res.PetTool == 0 ? 0 :((res.PetTool / total) * 100).toFixed(2);
+        const foodPercentage = res.Food == 0 ? 0 : ((res.Food / total) * 100).toFixed(2);
         const data = {
-            labels: res.labels,
-            datasets: [{
-                    label: 'Thú cưng',
-                    data: res.PetRevenue,
-                    borderColor: '#FF0000', // Mã màu đỏ
-                    backgroundColor: 'rgba(255, 0, 0, 0.5)',
-                },
-                {
-                    label: 'Phụ kiện',
-                    data: res.PetToolRevenue,
-                    borderColor: '#0000FF',
-                    backgroundColor: 'rgba(0, 0, 255, 0.5)',
-                }
-            ]
-        };
-        const config = {
-            type: 'bar',
+            labels: [petPercentage.toString() + '%', petToolPercentage.toString() + '%', foodPercentage.toString() + '%'],
+            datasets: [
+              {
+                label: 'Thú cưng',
+                data: [petPercentage, petToolPercentage, foodPercentage],
+                backgroundColor: ['#ffa64d', '#ff99cc', '#1aa3ff'],
+              }]
+          };
+          const config = {
+            type: 'pie',
             data: data,
             options: {
-                indexAxis: 'y',
-                elements: {
-                    bar: {
-                        borderWidth: 2,
-                    }
+              responsive: true,
+              plugins: {
+                legend: {
+                  position: 'top',
                 },
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                    },
-                    title: {
-                        display: true,
-                        text: 'Biểu đồ doanh thu Thú cưng & Phụ kiện'
-                    }
+                title: {
+                  display: true,
+                  text: 'Biểu đồ doanh thu'
                 }
+              }
             },
-        };
+          };
         petRevenueChart = new Chart("petRevenueChart", config);
     });
 }

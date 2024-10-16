@@ -6,6 +6,7 @@ use App\Models\RActiveOn;
 use Illuminate\Http\Request;
 use App\Models\Promotion;
 use Str;
+use Log;
 class PromotionController extends Controller
 {
     /**
@@ -42,18 +43,17 @@ class PromotionController extends Controller
         $dataFields = [
             "promotionId"  => (string)Str::uuid(), 
             "value" => $request->input("value"), 
-            "description" => $request->input("description"), // Sửa chính tả
+            "description" => $request->input("description")??"", // Sửa chính tả
             "title" => $request->input("title"),
             "dateStart" => $request->input("dateStart"),
             "dateEnd" => $request->input("dateEnd"),
             "criterias" => $request->input("node")
         ];
-        
         try {
             $result = $this->neo4j->run($query, $dataFields);
             return response()->json(["Inform" => "Thành công", "promotionId" => $dataFields["promotionId"]],200);
         }catch(\Exception $e){
-            return response()->json(['Inform' => "Có lỗi: " + $e->getMessage()], 404);
+            return response()->json(['Inform' => "Có lỗi: " . $e->getMessage()], 400);
         }
     }
 

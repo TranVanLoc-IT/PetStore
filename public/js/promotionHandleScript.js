@@ -23,7 +23,7 @@ function Delete(id) {
             }, 2000);
         })
         .catch(err => {
-            EAlertMessage.innerText = err;
+            EAlertMessage.innerText = "Thất bại";
             EAlertBlock.classList.remove('hidden');
 
             // Sau 2 giây (2000ms), ẩn thông báo
@@ -75,7 +75,20 @@ document.getElementById('create-promotion-form').addEventListener('submit', func
             }
             return response.json();
         })
-        .then(response => {
+        .then(response => {             
+            let isActive = `<div class="h-4 w-4 rounded-full inline-block mr-2 bg-orange-500"></div>`;
+            if(new Date(dateEnd) > Date.now()) {
+                isActive = `<div class="h-4 w-4 rounded-full inline-block mr-2 bg-green-500"></div>`
+            }
+            let selectedValues = formData.getAll("node[]");  // Lấy các giá trị đã chọn
+            let selectedTexts = [];
+
+            selectedValues.forEach(value => {
+                let option = document.querySelector(`option[value="${value}"]`);
+                if (option) {
+                    selectedTexts.push(option.text);  // Lấy text của option đã chọn
+                }
+            });
             document.getElementById('promotionTableBody').innerHTML += `<tr id="promotion-${response.promotionId}" class="border-b dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700">
                             <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                                 <div class="flex items-center mr-3">
@@ -84,13 +97,13 @@ document.getElementById('create-promotion-form').addEventListener('submit', func
                             </th>
                             <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                                 <div class="flex items-center">
-                                    <div class="h-4 w-4 rounded-full inline-block mr-2 bg-orange-500"></div>
+                                    ${isActive}
                                     ${ formData.get('title')}
                                 </div>
                             </td>
                             <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">${ formData.get('description')}</td>
                             <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                ${formData.getAll("node[]").join(', ')}
+                                ${selectedTexts.join(', ')}
                             </td>
                             <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">${ formData.get('value')}</td>
                             <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
@@ -125,7 +138,7 @@ document.getElementById('create-promotion-form').addEventListener('submit', func
             }, 2000);
         })
         .catch(err => {
-            EAlertMessage.innerText = err;
+            EAlertMessage.innerText = "Thất bại";
             EAlertBlock.classList.remove('hidden');
 
             // Sau 2 giây (2000ms), ẩn thông báo
@@ -144,7 +157,7 @@ function LoadCreateProductListForm() {
         case "Pet":
             GetDropdownData("/pet").then(data => {
                 data.forEach(pet => {
-                    dropdownContent += `<option value="${pet["petName"]}">${pet["petName"]}</option>`
+                    dropdownContent += `<option value="${pet["petId"]}">${pet["petName"]}</option>`
                 });
                 createForm.innerHTML = `<div class="flex flex-wrap space-x-4 items-center mt-2">
                   <label for="category" class="text-sm font-medium text-gray-900 dark:text-white">Sản phẩm</label>

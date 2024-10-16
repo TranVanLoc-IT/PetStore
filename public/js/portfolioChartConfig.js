@@ -1,3 +1,8 @@
+let totalStaff = 0;
+let totalStaffPaid = 0;
+let totalStaffNotPaid = 0;
+let totalExpense = 0;
+
 async function GetData(url, month) {
     month = month == 0 ? new Date().getMonth() + 1 : month;
     try {
@@ -14,9 +19,11 @@ function LoadTableData() {
     const value = document.getElementById('tableOption').value;
     let content = "";
     if (value == "/san-pham") {
+        // Dữ liệu sản phẩm
         GetData(value, month).then(data => {
             data.products.forEach((e, index) => {
                 let ivnlist = "";
+                // Lấy danh sách hóa đơn của từng sản phẩm và nối thành một chuỗi
                 data.invoice[index].forEach(i => {
                     ivnlist += i + ' ';
                 });
@@ -24,7 +31,7 @@ function LoadTableData() {
         <tr class="border-b dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700">
             <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                     <div class="h-10 w-10 mr-3 bg-gray-100 rounded-full overflow-hidden">
-                      <img src="../img/pet/${e.img}" alt="Annette Watson profile picture">
+                      <img src="../img/${e.img}" alt="Annette Watson profile picture">
                     </div>
             </th>
             <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
@@ -68,25 +75,39 @@ function LoadTableData() {
         });
 
     } else {
+        // Dữ liệu nhân viên
         GetData(value, month).then(data => {
             let dateWorkCol = [];
+            totalStaff = data.staffs.length;
+            totalStaffPaid = 0;
+            totalStaffNotPaid = 0;
+            totalExpense = 0;
+            // Mỗi nhân viên đều có ca làm khác nhau, cần tổng hợp các ngày đó lại và kiểm tra các ngày đã thêm
             data.staffs.forEach((e, index) => {
                 data.shiftWorks[index].forEach(i => {
                     if (!dateWorkCol.includes(`<th class='px-2 py-1 text-sm w-auto text-center'>${i.date}</th>`) && i.date != null)
                         dateWorkCol.push(`<th class='px-2 py-1 text-sm w-auto text-center'>${i.date}</th>`);
                 });
             });
+            dateWorkCol = dateWorkCol.sort();
             data.staffs.forEach((e, index) => {
-                let dateWorkCell = "";
                 let sumOfHours = 0;
+                let dateWorkCell = "";
+                // Nhân viên đã trả
+                totalStaffPaid += data.paid[index] != null ? 1 : 0;
                 data.shiftWorks[index].forEach(i => {
                     if (i != null)
                         sumOfHours += i.hour;
                 });
+
+                // Tổng tiền đã chi trả
+                totalExpense += data.paid[index] != null ? sumOfHours * data.salary[index] : 0;
                 // tạo dòng dữ liệu theo cột                
                 dateWorkCol.forEach(element => {
                     let cell = "";
+                    // Index: Mỗi nhân viên có danh sách shiftwork riêng
                     data.shiftWorks[index].forEach(d => {
+                        // Lặp qua, có thì chấm công không thì -> 0
                         if (element.includes(d.date)) {
                             cell = `<td>${d.phase}-${d.hour}</td>`;
                             return;
@@ -97,6 +118,7 @@ function LoadTableData() {
                     })
                     dateWorkCell += cell;
                 });
+                // Để biết thanh toán hay chưa dựa vào giao dịch đã có và có nên thanh toán không dựa vào lương tháng cho nút cập nhật TT lương
                 content += `
             <tr class="border-b dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700">
                 
@@ -117,19 +139,20 @@ function LoadTableData() {
                 
                 <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">${data.role[index]}</td>
                 ${dateWorkCell}
-                <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">${Math.floor(data.salary[index])}</td>
+                <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">${DetectUnit(Math.floor(data.salary[index]))}</td>
                 <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">${sumOfHours}</td>
-                <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">${Math.floor(sumOfHours * data.salary[index])}</td>
+                <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">${DetectUnit(Math.floor(sumOfHours * data.salary[index]))}</td>
                 <td class="font-medium text-gray-900 whitespace-nowrap dark:text-white ${e.staffId}-payStatus">
-    ${data.paid[index] != null 
-        ? data.paid[index] 
-        : `<button class="bg-amber-300 w-full h-full block p-5" onclick="PaySalary('${e.staffId}', ${sumOfHours * data.salary[index]})">Trả lương</button>`}
-</td>
+            ${data.paid[index] != null 
+                ? data.paid[index] 
+                : sumOfHours * data.salary[index] == 0 ? "":`<button class="bg-amber-300 w-full h-full block p-5" onclick="PaySalary('${e.staffId}', ${sumOfHours * data.salary[index]})">Trả lương</button>`}
+        </td>
 
 
-               
-            </tr>`;
+                    
+                    </tr>`;
             })
+           UpdateGeneralInfor();
             tableView.innerHTML = `<thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
         <tr>
             <th scope="col" class="p-4">Tình trạng</th>
@@ -142,8 +165,9 @@ function LoadTableData() {
             <th scope="col" class="p-4">Lương tháng</th>
             <th scope="col" class="p-4">Thao tác</th>
         </tr>
-    </thead><tbody>${content}</tbody>`;
+        </thead><tbody>${content}</tbody>`;
         });
+        totalStaffNotPaid = totalStaff - totalStaffPaid;
     }
 }
 
@@ -165,8 +189,13 @@ function PaySalary(staffId, value) {
             }
             return response.json();
         }).then(response => {
+            totalStaffPaid += 1;
+            totalStaffNotPaid = totalStaff - totalStaffPaid;
+            totalExpense += value;
+            UpdateGeneralInfor();
+            // Lưu lại lịch sử, thanh toán ở chỗ khác
             document.querySelector(`.${staffId}-payStatus`).textContent = response.Inform;
-            SAlertMessage.innerText = response.Inform;
+            SAlertMessage.innerText = "Đã cập nhật thanh toán";
             SAlertBlock.classList.remove('hidden');
 
             // Sau 2 giây (2000ms), ẩn thông báo
@@ -222,4 +251,10 @@ function UpdateProductPrice(id, value) {
                 EAlertBlock.classList.add('hidden');
             }, 2000);
         });
+}
+function UpdateGeneralInfor(){
+    document.querySelector('.general-block').innerHTML = `<div class='pt-2'>Số lượng nhân viên: ${totalStaff}</div> 
+    <div class='pt-2'>Đã thanh toán: ${totalStaffPaid}</div> 
+    <div class='pt-2'>Chưa thanh toán: ${totalStaffNotPaid}</div> 
+    <div>Số tiền đã thanh toán: ${DetectUnit(Math.floor(totalExpense))} </div>`
 }

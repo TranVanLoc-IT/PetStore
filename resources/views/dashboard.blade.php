@@ -23,7 +23,7 @@
         }
         $totalExpense = number_format(floor($store->totalExpense));
         $totalRevenue = number_format(floor($store->totalRevenue));
-        $profit = number_format(floor($store->totalRevenue - $store->totalExpense));
+        $profit = floor($store->totalRevenue - $store->totalExpense);
 @endphp
 <main class="p-6 sm:p-10 space-y-6">
     <div class="flex flex-col space-y-6 md:space-y-0 md:flex-row justify-between">
@@ -56,7 +56,7 @@
                 </svg>
             </div>
             <div>
-                <span class="block text-2xl font-bold totalRevenue">{{ $totalRevenue }} VND</span>
+                <span class="block text-2xl font-bold totalRevenue">{{ $totalRevenue }} {{($store->totalRevenue > 1000000000 ? "Tỉ": $store->totalRevenue > 1000000) ? "Triệu": "Nghìn"}} VND</span>
                 <span class="block text-gray-500">Tổng doanh thu</span>
             </div>
         </div>
@@ -70,7 +70,7 @@
             </div>
             <div>
                 <span
-                    class="inline-block text-xl text-gray-500 font-semibold totalExpense">{{ $totalExpense }} VND</span>
+                    class="inline-block text-xl text-gray-500 font-semibold totalExpense">{{ $totalExpense }} {{($store->totalExpense > 1000000000 ? "Tỉ": $store->totalExpense > 1000000) ? "Triệu": "Nghìn"}} VND</span>
                 <span class="block text-gray-500">Tổng chi</span>
             </div>
         </div>
@@ -84,7 +84,7 @@
             </div>
             <div>
                 <span
-                    class="block text-2xl font-bold totalProfit">{{ $profit }} VND</span>
+                    class="block text-2xl font-bold totalProfit">{{ number_format($profit) }} {{($profit > 1000000000 ? "Tỉ": $profit > 1000000) ? "Triệu": "Nghìn"}} VND</span>
                 <span class="block text-gray-500">Tổng lợi nhuận</span>
             </div>
         </div>
@@ -132,7 +132,7 @@
                 list($petName, $img) = explode('-', $pet);
                 echo '<li class="flex items-center">
                     <div class="h-10 w-10 mr-3 bg-gray-100 rounded-full overflow-hidden">
-                      <img src="../img/pet/'.$img.'" alt="Annette Watson profile picture">
+                      <img src="../img/'.$img.'" alt="">
                     </div>
                     <span class="text-gray-600">'.$petName.'</span>
                     <span class="ml-auto font-semibold">'.$kpi.'</span>

@@ -1,5 +1,7 @@
 async function ViewDetail(id) {
     try {
+        // Lấy dữ liệu mà k cần tải lại trang
+        // Url này được cấu hình trong file Web.php gọi đến phương thức GetDetailInvoice
         const response = await fetch('/hoa-don/chi-tiet/' + id, {
             method: 'GET'
         });
@@ -12,9 +14,10 @@ async function ViewDetail(id) {
 
 function GetViewDetail(id) {
     ViewDetail(id).then(res => {
+        // Nhận dữ liệu và in ra HTML
         var productList = "";
         res["productList"].forEach((e) => {
-            productList += `<div class="p-3 bg-gray-100 rounded-lg border border-gray-200 dark:bg-gray-700 dark:border-gray-600"><dt class="mb-2 font-semibold leading-none text-gray-900 dark:text-white">Đối tác: </dt><dd class="text-gray-500 dark:text-gray-400">
+            productList += `<div class="p-3 bg-gray-100 rounded-lg border border-gray-200 dark:bg-gray-700 dark:border-gray-600"><dt class="mb-2 font-semibold leading-none text-gray-900 dark:text-white">Sản phẩm mua: </dt><dd class="text-gray-500 dark:text-gray-400">
                 ${e["productName"]} - SL: ${e["quantity"]} - Giá: ${e["price"]}
                 </div>`;
         });
@@ -31,21 +34,22 @@ function GetViewDetail(id) {
     });
 }
 
-function DeleteAll() {
+function Delete(id) {
     if (confirm("Xác nhận xóa") === true) {
         const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        fetch('/hoa-don/xoa-het', {
+        fetch('/hoa-don/xoa', {
                 method: 'DELETE',
                 headers: {
                     'X-CSRF-TOKEN': token,
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    month: document.getElementById("invoiceOptions").value
-                }), // Send the ID in the request body
+                    id: id
+                }), // Gửi id đến controller
             })
             .then(response => response.json())
             .then(response => {
+                // nếu thành công
                 SAlertMessage.innerText = response.Inform;
                 SAlertBlock.classList.remove('hidden');
 
@@ -55,7 +59,8 @@ function DeleteAll() {
                 }, 2000);
             })
             .catch(err => {
-                EAlertMessage.innerText = err;
+                // Nếu thất bại
+                EAlertMessage.innerText = "Thất bại";
                 EAlertBlock.classList.remove('hidden');
 
                 // Sau 2 giây (2000ms), ẩn thông báo
@@ -63,12 +68,12 @@ function DeleteAll() {
                     EAlertBlock.classList.add('hidden');
                 }, 2000);
             });
-        document.getElementById("invoice-view-block").innerHTML = "";
-        document.getElementById("totalInvoice").innerText = "";
-        document.getElementById("totalRevenue").innertext = "";
+            location.reload();
+        // Xóa sạch các kết quả và số liệu
     }
 }
 
 function ReloadData() {
+    // Tải lại trang
     window.location.href = "/hoa-don/" + document.getElementById("invoiceOptions").value;
 }

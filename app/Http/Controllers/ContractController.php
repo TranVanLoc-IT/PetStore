@@ -30,9 +30,10 @@ class ContractController extends Controller
         $filter = [];
         $query = $this->queryDatasource["Contract"]["GetContracts"];
         if($type != "all"){
-            $query = $this->queryDatasource["Contract"]["GetContractWithFilter"];
+            $query = $this->queryDatasource["Contract"]["GetContractUnconfirmed"];
             $filter["criteria"] = false;
             if($type == "confirmed"){
+                $query = $this->queryDatasource["Contract"]["GetContractConfirmed"];
                 $filter["criteria"] = true;
             }
         }
@@ -43,10 +44,9 @@ class ContractController extends Controller
         foreach ($records as $record){
             $contract = new Contract($record->get("c")->toArray());
             array_push($contracts, $contract);
-            $ownedBy[$contract->contractId] = new ROwnedBy($record->get("o")->GetProperties()->toArray());
-            $contractVendors[$contract->contractId] = new Vendor($record->get("v")->GetProperties()->toArray());
+            $contractVendors[$contract->contractId] = $record->get("vendor");
         }
-        return view('contractView', ['contracts'=> $contracts, "ownedBy" => $ownedBy, "contractVendors" => $contractVendors]);
+        return view('contractView', ['contracts'=> $contracts, "contractVendors" => $contractVendors]);
     }
 
     /**
@@ -187,7 +187,7 @@ class ContractController extends Controller
             return response()->json(['Inform' => $dataFields["contractId"]],200);
 
         }catch(\Exception $e){
-            return response()->json(['Inform' => "Có lỗi"], 404);
+            return response()->json(['Inform' => "Có lỗi cú pháp"], 404);
         }
     }
     

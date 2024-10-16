@@ -12,7 +12,7 @@ Route::get('/store/totalReAndExData/{month}', [App\Http\Controllers\DashboardCon
 Route::prefix('/hoa-don')->group(function(){
     Route::get('/{month?}', [App\Http\Controllers\InvoiceController::class, 'GetInvoice']);
     Route::get('/chi-tiet/{id}', [App\Http\Controllers\InvoiceController::class, 'GetDetailInvoice']);
-    Route::delete('/xoa-het}', [App\Http\Controllers\InvoiceController::class, 'DeletAll']);
+    Route::delete('/xoa', [App\Http\Controllers\InvoiceController::class, 'Delete']);
 });
 
 
