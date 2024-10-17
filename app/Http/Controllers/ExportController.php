@@ -83,14 +83,14 @@ class ExportController extends Controller
         }
         foreach($record as $r){
             $row = [$r->get("name")];
-            array_push($row, [$r->get("dateCreated")]);
+            array_push($row, $r->get("dateCreated"));
             $product = [];
             $productNames = $r->get("productName")->toArray();
             $amounts = $r->get("amounts")->toArray();
 
             if (count($productNames) > 0 && count($amounts) > 0 && count($productNames) === count($amounts)) {
                 for ($count = 0; $count < count($productNames); $count++) {
-                    // Fine
+                    // SL sp cung cap theo tung san pham
                     $product[$productNames[$count]] = $amounts[$count];
                 }
             }

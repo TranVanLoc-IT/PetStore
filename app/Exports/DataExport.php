@@ -48,7 +48,7 @@ class DataExport implements FromCollection, WithHeadings, WithTitle, WithStyles
                 // Các cột còn lại
                 $expandedRow[] = $row[2]; 
                 $expandedRow[] = $row[3]; 
-                $expandedRow[] = $row[4];
+                $expandedRow[] = number_format((float)$row[4], 0,',','.').' VND';
     
                 $data[] = $expandedRow;
             }    
@@ -74,7 +74,7 @@ class DataExport implements FromCollection, WithHeadings, WithTitle, WithStyles
             // Các cột còn lại
             $expandedRow[] = $row[3]; 
             $expandedRow[] = $row[4]; 
-            $expandedRow[] = $row[5];
+            $expandedRow[] = number_format((float)$row[5], 0,',','.').' VND';
 
             $data[] = $expandedRow;
         }

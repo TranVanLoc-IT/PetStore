@@ -297,7 +297,7 @@ Export:
     MATCH (n:Pet|PetTool|Food)
     OPTIONAL MATCH (n)<-[r:PURCHASE]-(i:Invoice)
     WHERE toString(i.dateCreated) =~ $date OR i IS NULL
-    WITH n, r, i, collect(toString(i.dateCreated)) AS invoiceDates
+    WITH n, r, i, collect(toString(i.dateCreated)) AS invoiceDates, collect(i.totalCost) as values
     RETURN 
       CASE 
         WHEN n:Pet THEN n.petName 
@@ -307,23 +307,26 @@ Export:
       END AS name, 
       coalesce(r.quantity, 0) AS quantitySold, 
       n.availableQuantity AS availableQuantity,
-      invoiceDates AS dates,
-      coalesce(sum(i.totalCost), 0) AS totalRevenue,
-      [i IN invoiceDates | CASE 
-                            WHEN i IN invoiceDates THEN i 
-                            ELSE 0 
-                          END] AS values
+      invoiceDates AS dates, values,
+      coalesce(sum(i.totalCost), 0) AS totalRevenue;
+      
 
   StoreRevenue: | 
     MATCH (n:Contract | Invoice)<-[pa:PAY_FOR]-(t:Transaction)-[:INCOME | EXPENSE]->(s:Store)
     OPTIONAL MATCH (n)-[r:PROVIDES | PURCHASE]->(p:Pet | PetTool | Food)
-    WITH n, s, r, t, pa, p,
+    WITH n, s, r, t, pa, p ,
+        n.totalCost AS totalCost,
         CASE 
             WHEN p IS NOT NULL AND p:Pet THEN p.petName 
             WHEN p IS NOT NULL AND p:PetTool THEN p.toolName 
             WHEN p IS NOT NULL AND p:Food THEN p.foodName 
             ELSE NULL 
         END AS productName,
+        CASE 
+            WHEN n:Contract THEN n.totalQuantity
+            WHEN n:Invoice THEN n.totalAmount
+            ELSE NULL
+        END AS amount,
         CASE 
             WHEN n:Contract AND toString(n.signingDate) =~ $date THEN n.signingDate
             WHEN n:Invoice AND toString(n.dateCreated) =~ $date THEN n.dateCreated
@@ -333,9 +336,7 @@ Export:
             WHEN n:Contract THEN "Hợp đồng - " + n.contractId 
             WHEN n:Invoice THEN "Hóa đơn - " + n.invoiceId 
             ELSE "" 
-        END AS name,
-        n.totalCost AS totalCost,
-        r.totalAmount AS amount
+        END AS name
         WHERE dateCreated IS NOT NULL
         RETURN 
         name, 
