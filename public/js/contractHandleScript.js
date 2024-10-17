@@ -111,9 +111,9 @@ function Delete(id) {
         })
         .then(response => response.json())
         .then(response => {
+            totalSize--;
             data = data.map((e, index)=>{
                 if(e[index].contractId === id) {
-                    totalSize--;
                     return undefined; // xoa
                 }
                 else{
@@ -224,7 +224,7 @@ function AddNewTableRow(dataTable, data){
                                 ${data.title}
                                 </div>
                             </td>
-                            <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">${data.totalCost}</td>
+                            <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">${DetectUnit(data.totalCost)}</td>
                             <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                             ${data.signingDate}
                             </td>

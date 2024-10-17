@@ -21,7 +21,7 @@ class ExportController extends Controller
     public function ExportPetRevenue($month){
         $columns = [];
         $year = date("Y");
-        $month = $month == '0' ? Carbon::now()->format('m') : $month;
+        $month = $month == 'null' ? Carbon::now()->format('m') : $month;
         $dateCriteria = $year . '-' . $month . '.*';
         $today = date('d-m-Y');
 
@@ -67,7 +67,7 @@ class ExportController extends Controller
     public function ExportStoreExpense($month){
         $columns = [];
         $year = date("Y");
-        $month = $month == '0' ? Carbon::now()->format('m') : $month;
+        $month = $month == 'null' ? Carbon::now()->format('m') : $month;
         $dateCriteria = $year . '-' . $month . '.*';
         $today = date('d-m-Y');
 

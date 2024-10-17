@@ -3,7 +3,6 @@
 @section('content')
 <div>
     @php
-        const TABLE_OPT = "tableOptions";
         const TIME_OPT = "timeOptions";
         const EX_FUNC = "";
         $months =[];
@@ -17,14 +16,22 @@
             $months[$m] = "Tháng ".$m;
             }
             }
-            $dataType = ['/pet' => "Sản phẩm", '/store' => "Cửa hàng"]
     @endphp
     <!-- Waste no more time arguing what a good man should be, be one. - Marcus Aurelius -->
     <div class="my-3">Chọn thời gian:
         <x-dropdown-button :optionCollection="$months" :componentId="TIME_OPT" :changeFunction="EX_FUNC" />
     </div>
     <div>Chọn dữ liệu:
-        <x-dropdown-button :optionCollection="$dataType" :componentId="TABLE_OPT" :changeFunction="EX_FUNC" />
+        <div class="relative inline-block text-left">
+            <!-- Dropdown menu -->
+            <div role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
+                <select id="tableOptions" title="Chọn bảng dữ liệu" class="border border-blue-500 rounded-md p-2 hover:border-blue-700 focus:ring focus:ring-blue-300 focus:outline-none w-52">
+                    <option disabled selected value="0">Chọn</option>
+                        <option class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" value="/pet">Sản phẩm</a>
+                        <option class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" value="/store">Cửa hàng</a>
+                </select>
+            </div>
+        </div>
     </div>
     <button id="submit-export"
         class="btn bg-green-400 hover:bg-green-500 p-4 rounded text-white fw-bold mx-auto container w-50">Xuất
@@ -33,7 +40,7 @@
 <script>
     $(document).ready(function () {
         $('#submit-export').click(function () {
-            if ($('#timeOptions').val() == null && $('#tableOptions').val() == null) return;
+            if ($('#tableOptions').val() == null) return;
             window.location.href = window.location.href + $('#tableOptions').val() + '/' + $(
                 '#timeOptions').val();
         })

@@ -6,6 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Store extends BaseEntity
 {
-    protected $fillable = ['totalExpense', 'totalRevenue', 'storeName', 'address'];
+    protected $fillable = ['totalExpense', 'totalRevenue', 'storeName', 'address', 'phone'];
 }
 

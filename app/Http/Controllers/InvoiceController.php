@@ -19,7 +19,7 @@ class InvoiceController extends Controller
     public function GetInvoice($month = null){
         // thiet lap dieu kien ngay dang nam-thang.*
         $year = date("Y");
-        $month = $month == '0' ? Carbon::now()->format('m') : $month;
+        $month = $month == null ? Carbon::now()->format('m') : $month;
         $dateCriteria = $year.'-'.$month.'.*';
         $invoices = [];
 
@@ -66,7 +66,18 @@ class InvoiceController extends Controller
         // Lay tung phan data
         $transaction = $data->get('transaction')->toArray();
         $productList = $data->get('productList')->toArray();
-        return response()->json(["transaction" => $transaction, "productList" => $productList]);
+
+        $discountValues = [];
+        $promotionNames = [];
+        $prData = $this->neo4j->run($this->queryDatasource["Invoice"]["GetPromotionApplies"],["id" => $invoiceId]);
+        if($prData->count() > 0)
+        {
+            foreach($prData as $pr){
+                $discountValues[$pr->get("name")] = $pr->get("value");
+                array_push($promotionNames, $pr->get("name"));
+            }
+        }
+        return response()->json(["transaction" => $transaction, "productList" => $productList, 'promotionNames' => $promotionNames, 'discountValues' => $discountValues]);
     }
    
 }

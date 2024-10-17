@@ -40,7 +40,7 @@ function LoadTableData() {
                 </div>
             </th>
             <td class="px-4 py-3">
-                <span class="bg-primary-100 text-primary-800 text-xs font-medium px-2 py-0.5 rounded dark:bg-primary-900 dark:text-primary-300 ${e.petId ?? e.foodId ?? e.toolId}-price">${e.price}</span>
+                <span class="bg-primary-100 text-primary-800 text-xs font-medium px-2 py-0.5 rounded dark:bg-primary-900 dark:text-primary-300 ${e.petId ?? e.foodId ?? e.toolId}-price">${DetectUnit(e.price)}</span>
             </td>
             <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                 <div class="flex items-center">
@@ -51,7 +51,7 @@ function LoadTableData() {
             <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">${Number(data.totalSold[index])}</td>
             <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">${ivnlist}</td>
             <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-            ${data.totalRevenue[index]}
+            ${DetectUnit(data.totalRevenue[index])}
             </td>
             <td>
                 <input type="number" name="newPrice" class="form-control">
@@ -77,7 +77,8 @@ function LoadTableData() {
     } else {
         // Dữ liệu nhân viên
         GetData(value, month).then(data => {
-            let dateWorkCol = [];
+            var dateWorkCol = [];
+            var totalDateWork = [];
             totalStaff = data.staffs.length;
             totalStaffPaid = 0;
             totalStaffNotPaid = 0;
@@ -85,8 +86,11 @@ function LoadTableData() {
             // Mỗi nhân viên đều có ca làm khác nhau, cần tổng hợp các ngày đó lại và kiểm tra các ngày đã thêm
             data.staffs.forEach((e, index) => {
                 data.shiftWorks[index].forEach(i => {
-                    if (!dateWorkCol.includes(`<th class='px-2 py-1 text-sm w-auto text-center'>${i.date}</th>`) && i.date != null)
-                        dateWorkCol.push(`<th class='px-2 py-1 text-sm w-auto text-center'>${i.date}</th>`);
+                    if (!totalDateWork.includes(i.date))
+                        {
+                            dateWorkCol.push(`<th class='px-2 py-1 text-sm w-auto text-center'>${i.date}</th>`);
+                            totalDateWork.push(i.date);
+                        }
                 });
             });
             dateWorkCol = dateWorkCol.sort();
@@ -103,18 +107,16 @@ function LoadTableData() {
                 // Tổng tiền đã chi trả
                 totalExpense += data.paid[index] != null ? sumOfHours * data.salary[index] : 0;
                 // tạo dòng dữ liệu theo cột                
-                dateWorkCol.forEach(element => {
-                    let cell = "";
+                totalDateWork.forEach(element => {
+                    let cell = "<td>0</td>";
                     // Index: Mỗi nhân viên có danh sách shiftwork riêng
                     data.shiftWorks[index].forEach(d => {
                         // Lặp qua, có thì chấm công không thì -> 0
-                        if (element.includes(d.date)) {
-                            cell = `<td>${d.phase}-${d.hour}</td>`;
+                        if (element == d.date) {
+                            cell = `<td>${d.phase}-${d.hour}h</td>`;
                             return;
                         }
-                        if (d.date != null) {
-                            cell = `<td>0</td>`;
-                        }
+                        // Không dùng if nếu có dùng else if -> đè lên if trước
                     })
                     dateWorkCell += cell;
                 });
@@ -232,7 +234,7 @@ function UpdateProductPrice(id, value) {
             }
             return response.json();
         }).then(response => {
-            document.querySelector(`.${id}-price`).textContent = value;
+            document.querySelector(`.${id}-price`).textContent = DetectUnit(value);
             SAlertMessage.innerText = response.Inform;
             SAlertBlock.classList.remove('hidden');
 

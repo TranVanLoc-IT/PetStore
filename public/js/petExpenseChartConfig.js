@@ -25,7 +25,7 @@ function CallGetRevenueData() {
             labels: [petPercentage.toString() + '%', petToolPercentage.toString() + '%', foodPercentage.toString() + '%'],
             datasets: [
               {
-                label: 'Thú cưng',
+                label: ['Thú cưng','Phụ kiện', 'Thức ăn'],
                 data: [petPercentage, petToolPercentage, foodPercentage],
                 backgroundColor: ['#ffa64d', '#ff99cc', '#1aa3ff'],
               }]

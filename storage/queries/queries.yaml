@@ -1,4 +1,6 @@
 Dashboard:
+  GetStoreProfit: |
+    MATCH (s:Store) RETURN s;
   GetStore: |
     MATCH (t:Transaction)
     WHERE toString(t.timeCreated) =~ $date
@@ -50,7 +52,7 @@ Invoice:
     WHERE toString(i.dateCreated) =~ $date 
     RETURN {
     invoiceId: i.invoiceId, 
-    totalAmount: i.totalAmount, 
+    totalAmount: COALESCE(i.totalAmount, 0), 
     dateCreated: apoc.temporal.format(i.dateCreated, 'dd-MM-yyyy HH:mm:ss'),
     totalCost: i.totalCost } AS i
   GetDetailInvoice: |
@@ -68,6 +70,8 @@ Invoice:
             quantity: r.quantity
         } AS products
     RETURN transaction, collect(products) AS productList
+  GetPromotionApplies: |
+    MATCH (i:Invoice {invoiceId: $id})<-[r:DISCOUNT]-(pr:Promotion) return r.discountValue as value, pr.title as name
 
   DeleteInvoice: |
     MATCH (i:Invoice{invoiceId: $id})<-[r:PAY_FOR]-(t:Transaction) 

@@ -159,9 +159,10 @@ class DashboardController extends Controller
         $petQuantity = [];
         $petTopKPIList = $this->GetTopKPIList(null);
         $store = $this->GetStore('0');
+        $storeProfit = new Store($this->neo4j->run($this->queryDatasource["Dashboard"]["GetStoreProfit"])->first()->get("s")->getProperties()->toArray());
         $petQuantity = $this->GetTotalPets()[0]->toArray();
         
-        return view('dashboard',compact("store", "petQuantity", "petTopKPIList"));
+        return view('dashboard',compact("store", "petQuantity", "petTopKPIList", "storeProfit"));
     }
     
     
